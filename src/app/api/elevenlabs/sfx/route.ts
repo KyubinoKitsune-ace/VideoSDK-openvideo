@@ -1,4 +1,3 @@
-
 import { R2StorageService } from '@/lib/r2';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -15,7 +14,10 @@ export async function POST(req: NextRequest) {
     const { text, duration } = await req.json();
 
     if (!text) {
-      return NextResponse.json({ error: 'Text/Description is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Text/Description is required' },
+        { status: 400 }
+      );
     }
 
     const apiKey = process.env.ELEVENLABS_API_KEY;

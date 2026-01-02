@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,7 +26,7 @@ export const VoiceoverChatPanel = () => {
       }
 
       const data = await response.json();
-      
+
       addAsset({
         id: crypto.randomUUID(),
         url: data.url,
@@ -35,7 +34,7 @@ export const VoiceoverChatPanel = () => {
         type: 'voiceover',
         createdAt: Date.now(),
       });
-      
+
       toast.success('Voiceover generated!');
       setText(''); // Clear input on success
     } catch (error) {

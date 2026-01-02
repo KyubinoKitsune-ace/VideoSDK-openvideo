@@ -45,7 +45,6 @@
   /* Panel */
   --color-panel: var(--panel-background);
   --color-panel-accent: var(--panel-accent);
-
 }
 
 :root {
@@ -121,7 +120,6 @@
 
   --panel-background: oklch(0.21 0.01 286);
   --panel-accent: oklch(0.21 0.01 286);
-
 }
 
 @layer base {

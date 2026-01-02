@@ -14,7 +14,7 @@ export class TextClip extends BaseTimelineClip {
     return { controls: createResizeControls() };
   }
   static ownDefaults = {
-    rx:  10,
+    rx: 10,
     ry: 10,
     objectCaching: false,
     borderColor: 'transparent',
@@ -65,9 +65,7 @@ export class TextClip extends BaseTimelineClip {
   }
 
   public updateSelected(ctx: CanvasRenderingContext2D) {
-    const borderColor = this.isSelected
-      ? '#22c55e'
-      : '#15803d';
+    const borderColor = this.isSelected ? '#22c55e' : '#15803d';
     const borderWidth = 2;
     const radius = 10;
 

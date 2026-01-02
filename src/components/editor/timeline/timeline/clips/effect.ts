@@ -37,9 +37,7 @@ export class EffectClip extends BaseTimelineClip {
     this.set({ dirty: true });
   }
   public updateSelected(ctx: CanvasRenderingContext2D) {
-    const borderColor = this.isSelected
-      ? '#be123c'
-      : '#9f1239';
+    const borderColor = this.isSelected ? '#be123c' : '#9f1239';
     const borderWidth = 2;
     const radius = 10;
 

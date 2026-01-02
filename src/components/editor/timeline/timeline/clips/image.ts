@@ -10,8 +10,8 @@ export class ImageClip extends BaseTimelineClip {
     return { controls: createResizeControls() };
   }
 
-    static ownDefaults = {
-    rx:  10,
+  static ownDefaults = {
+    rx: 10,
     ry: 10,
     objectCaching: false,
     borderColor: 'transparent',
@@ -30,7 +30,6 @@ export class ImageClip extends BaseTimelineClip {
     });
   }
 
-
   public _render(ctx: CanvasRenderingContext2D) {
     super._render(ctx);
     this.updateSelected(ctx);
@@ -41,9 +40,7 @@ export class ImageClip extends BaseTimelineClip {
     this.set({ dirty: true });
   }
   public updateSelected(ctx: CanvasRenderingContext2D) {
-    const borderColor = this.isSelected
-      ? '#0891b2'
-      : '#155e75';
+    const borderColor = this.isSelected ? '#0891b2' : '#155e75';
     const borderWidth = 2;
     const radius = 10;
 

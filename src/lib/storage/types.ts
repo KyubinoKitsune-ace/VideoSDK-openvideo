@@ -60,4 +60,3 @@ export type SerializedProject = Omit<
 };
 
 // Extend FileSystemDirectoryHandle with missing async iterator methods
-

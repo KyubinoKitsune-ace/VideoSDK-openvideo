@@ -27,22 +27,22 @@ export default function PanelMusic() {
     <div className="flex flex-col gap-4 p-4 h-full overflow-y-auto">
       {music.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-[200px] gap-4">
-            <IconMusic className="size-7 text-muted-foreground" stroke={1.5} />
+          <IconMusic className="size-7 text-muted-foreground" stroke={1.5} />
           <div className="text-center text-muted-foreground text-sm">
             No music generated yet. Use the chat panel to generate some!
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2">
-            {music.map((item) => (
-                <AudioItem
-                    key={item.id}
-                    item={item}
-                    onAdd={handleAddAudio}
-                    playingId={playingId}
-                    setPlayingId={setPlayingId}
-                />
-            ))}
+          {music.map((item) => (
+            <AudioItem
+              key={item.id}
+              item={item}
+              onAdd={handleAddAudio}
+              playingId={playingId}
+              setPlayingId={setPlayingId}
+            />
+          ))}
         </div>
       )}
     </div>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -36,7 +35,7 @@ export const MusicChatPanel = () => {
       }
 
       const data = await response.json();
-      
+
       addAsset({
         id: crypto.randomUUID(),
         url: data.url,
@@ -44,7 +43,7 @@ export const MusicChatPanel = () => {
         type: 'music',
         createdAt: Date.now(),
       });
-      
+
       toast.success('Music generated!');
       setText('');
     } catch (error) {
@@ -68,7 +67,7 @@ export const MusicChatPanel = () => {
         </div>
 
         <div className="flex items-center gap-2 pt-2 w-full justify-between">
-           <Popover>
+          <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
@@ -90,16 +89,14 @@ export const MusicChatPanel = () => {
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "justify-start h-8 text-xs font-normal",
-                      duration === d && "bg-secondary text-secondary-foreground"
+                      'justify-start h-8 text-xs font-normal',
+                      duration === d && 'bg-secondary text-secondary-foreground'
                     )}
                     onClick={() => setDuration(d)}
                   >
                     <IconClock className="size-3 mr-2 opacity-70" />
                     {d}s
-                    {duration === d && (
-                      <IconCheck className="size-3 ml-auto" />
-                    )}
+                    {duration === d && <IconCheck className="size-3 ml-auto" />}
                   </Button>
                 ))}
               </div>
@@ -112,7 +109,7 @@ export const MusicChatPanel = () => {
             onClick={handleGenerate}
             disabled={loading || !text.trim()}
           >
-             {loading ? (
+            {loading ? (
               <IconLoader2 className="size-4 animate-spin" />
             ) : (
               'Generate'

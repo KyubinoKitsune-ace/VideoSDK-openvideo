@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,7 +26,7 @@ export const SfxChatPanel = () => {
       }
 
       const data = await response.json();
-      
+
       addAsset({
         id: crypto.randomUUID(),
         url: data.url,
@@ -35,7 +34,7 @@ export const SfxChatPanel = () => {
         type: 'sfx',
         createdAt: Date.now(),
       });
-      
+
       toast.success('SFX generated!');
       setText('');
     } catch (error) {
@@ -65,7 +64,7 @@ export const SfxChatPanel = () => {
             onClick={handleGenerate}
             disabled={loading || !text.trim()}
           >
-             {loading ? (
+            {loading ? (
               <IconLoader2 className="size-4 animate-spin" />
             ) : (
               'Generate'

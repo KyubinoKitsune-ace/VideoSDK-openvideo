@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -14,7 +13,7 @@ interface GeneratedState {
   voiceovers: GeneratedAsset[];
   sfx: GeneratedAsset[];
   music: GeneratedAsset[];
-  
+
   // Track in-progress generations
   isGenerating: {
     voiceover: boolean;
@@ -41,25 +40,40 @@ export const useGeneratedStore = create<GeneratedState>()(
 
       addAsset: (asset) =>
         set((state) => {
-          const key = asset.type === 'voiceover' ? 'voiceovers' : asset.type === 'sfx' ? 'sfx' : 'music';
+          const key =
+            asset.type === 'voiceover'
+              ? 'voiceovers'
+              : asset.type === 'sfx'
+                ? 'sfx'
+                : 'music';
           return { [key]: [asset, ...state[key]] };
         }),
 
       removeAsset: (id, type) =>
         set((state) => {
-          const key = type === 'voiceover' ? 'voiceovers' : type === 'sfx' ? 'sfx' : 'music';
+          const key =
+            type === 'voiceover'
+              ? 'voiceovers'
+              : type === 'sfx'
+                ? 'sfx'
+                : 'music';
           return { [key]: state[key].filter((a) => a.id !== id) };
         }),
 
       setGenerating: (type, isGenerating) =>
         set((state) => {
-            const key = type === 'voiceover' ? 'voiceover' : type === 'sfx' ? 'sfx' : 'music';
-            return {
-                isGenerating: {
-                    ...state.isGenerating,
-                    [key]: isGenerating
-                }
-            }
+          const key =
+            type === 'voiceover'
+              ? 'voiceover'
+              : type === 'sfx'
+                ? 'sfx'
+                : 'music';
+          return {
+            isGenerating: {
+              ...state.isGenerating,
+              [key]: isGenerating,
+            },
+          };
         }),
     }),
     {
