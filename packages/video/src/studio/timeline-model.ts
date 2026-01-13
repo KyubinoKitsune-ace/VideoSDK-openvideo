@@ -1207,7 +1207,7 @@ export class TimelineModel {
 
     // Use a copy of the clips array because it will be modified during the loop
     const clipsToProcess = [...this.clips];
-    
+
     for (const clip of clipsToProcess) {
       const clipStart = clip.display.from;
       const clipEnd = clip.display.to;
@@ -1239,14 +1239,15 @@ export class TimelineModel {
         // Create second part first
         const secondPart = await clip.clone();
         secondPart.id = `clip_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+
         const secondPartDisplayFrom = fromUs;
         const secondPartDisplayTo = fromUs + (clipEnd - toUs);
-        const secondPartTrimFrom = clip.trim.from + (toUs - clipStart) * clip.playbackRate;
+        const secondPartTrimFrom =
+          clip.trim.from + (toUs - clipStart) * clip.playbackRate;
         const secondPartTrimTo = clip.trim.to;
 
         // Add to the same track
-        const track = this.tracks.find(t => t.clipIds.includes(clip.id));
+        const track = this.tracks.find((t) => t.clipIds.includes(clip.id));
         if (track) {
           await this.addClip(secondPart, { trackId: track.id });
           await this.updateClip(secondPart.id, {
@@ -1257,7 +1258,7 @@ export class TimelineModel {
             trim: {
               from: secondPartTrimFrom,
               to: secondPartTrimTo,
-            }
+            },
           });
         }
 
@@ -1270,7 +1271,7 @@ export class TimelineModel {
           trim: {
             from: clip.trim.from,
             to: clip.trim.from + (fromUs - clipStart) * clip.playbackRate,
-          }
+          },
         });
         continue;
       }
@@ -1285,7 +1286,7 @@ export class TimelineModel {
           trim: {
             from: clip.trim.from,
             to: clip.trim.from + (fromUs - clipStart) * clip.playbackRate,
-          }
+          },
         });
         continue;
       }
@@ -1300,7 +1301,7 @@ export class TimelineModel {
           trim: {
             from: clip.trim.from + (toUs - clipStart) * clip.playbackRate,
             to: clip.trim.to,
-          }
+          },
         });
         continue;
       }

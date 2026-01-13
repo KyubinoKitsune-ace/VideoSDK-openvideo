@@ -481,7 +481,10 @@ export function Timeline() {
               className="w-10 shrink-0 overflow-y-auto"
               data-track-labels
             >
-              <div className="w-full h-full overflow-hidden" ref={trackLabelsScrollRef}>
+              <div
+                className="w-full h-full overflow-hidden"
+                ref={trackLabelsScrollRef}
+              >
                 <div className="flex flex-col">
                   {tracks.map((track, index) => (
                     <div key={track.id}>

@@ -1,21 +1,12 @@
 import { useState } from 'react';
-import {
-  IconDownload,
-  IconExternalLink,
-  IconDots,
-  IconPlus,
-  IconUpload,
-} from '@tabler/icons-react';
+import { IconShare } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useStudioStore } from '@/stores/studio-store';
 import { Log, type IClip } from '@designcombo/video';
 import { ExportModal } from './export-modal';
+import { LogoIcons } from '../shared/logos';
+import Link from 'next/link';
+import { RedoIcon, UndoIcon } from 'lucide-react';
 
 export default function Header() {
   const { studio } = useStudioStore();
@@ -127,27 +118,18 @@ export default function Header() {
     <header className="relative flex h-14 w-full shrink-0 items-center justify-between border-b bg-background px-4">
       {/* Left Section */}
       <div className="flex items-center gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              File
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48">
-            <DropdownMenuItem onClick={handleNew}>
-              <IconPlus className="mr-2 size-4" />
-              New
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleImportJSON}>
-              <IconUpload className="mr-2 size-4" />
-              Import
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleExportJSON}>
-              <IconDownload className="mr-2 size-4" />
-              Export
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-md text-zinc-200">
+          <LogoIcons.scenify width={20} />
+        </div>
+
+        <div className=" pointer-events-auto flex h-10 items-center px-1.5">
+          <Button className="text-muted-foreground" variant="ghost" size="icon">
+            <UndoIcon width={20} />
+          </Button>
+          <Button className="text-muted-foreground" variant="ghost" size="icon">
+            <RedoIcon width={20} />
+          </Button>
+        </div>
       </div>
 
       {/* Center Section */}
@@ -157,26 +139,32 @@ export default function Header() {
 
       {/* Right Section */}
       <div className="flex items-center gap-2">
-        <Button
-          size="sm"
-          className="gap-2 rounded-full"
-          onClick={() => setIsExportModalOpen(true)}
-        >
-          Download
-        </Button>
+        <Link href="https://discord.gg/SCfMrQx8kr" target="_blank">
+          <Button className="h-7 rounded-lg" variant={'outline'}>
+            <LogoIcons.discord className="w-6 h-6" />
+            <span className="hidden md:block">Join Us</span>
+          </Button>
+        </Link>
 
         <ExportModal
           open={isExportModalOpen}
           onOpenChange={setIsExportModalOpen}
         />
 
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <IconExternalLink className="size-4" />
-          <span className="sr-only">Share</span>
+        <Button
+          className="flex h-7 gap-1 border border-border"
+          variant="outline"
+          size={'sm'}
+        >
+          <IconShare width={18} />{' '}
+          <span className="hidden md:block">Share</span>
         </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <IconDots className="size-4" />
-          <span className="sr-only">More actions</span>
+        <Button
+          size="sm"
+          className="gap-2 rounded-full"
+          onClick={() => setIsExportModalOpen(true)}
+        >
+          Download
         </Button>
       </div>
     </header>

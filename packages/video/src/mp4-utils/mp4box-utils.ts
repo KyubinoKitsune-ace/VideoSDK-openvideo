@@ -1,4 +1,4 @@
-import  {
+import {
   mp4box,
   AudioTrackOpts,
   ESDSBoxParser,
@@ -22,14 +22,17 @@ interface ExtractedConfig {
 /**
  * Extracts video and audio configurations from an MP4 file.
  */
-export function extractFileConfig(file: MP4File, info: MP4Info): ExtractedConfig {
+export function extractFileConfig(
+  file: MP4File,
+  info: MP4Info
+): ExtractedConfig {
   const result: ExtractedConfig = {};
 
   const vTrack = info.videoTracks[0];
   if (vTrack != null) {
     const videoDesc = parseVideoCodecDesc(file.getTrackById(vTrack.id))?.buffer;
     const codecInfo = getCodecInfo(vTrack.codec);
-    
+
     if (codecInfo) {
       result.videoTrackConf = {
         timescale: vTrack.timescale,
@@ -66,7 +69,8 @@ export function extractFileConfig(file: MP4File, info: MP4Info): ExtractedConfig
 
     result.audioDecoderConf = {
       codec: audioInfo.codec ?? DEFAULT_AUDIO_CONF.codec,
-      numberOfChannels: audioInfo.numberOfChannels ?? aTrack.audio.channel_count,
+      numberOfChannels:
+        audioInfo.numberOfChannels ?? aTrack.audio.channel_count,
       sampleRate: audioInfo.sampleRate ?? aTrack.audio.sample_rate,
     };
   }
@@ -75,8 +79,10 @@ export function extractFileConfig(file: MP4File, info: MP4Info): ExtractedConfig
 }
 
 function getCodecInfo(codec: string): { descKey: string; type: string } | null {
-  if (codec.startsWith('avc1')) return { descKey: 'avcDecoderConfigRecord', type: 'avc1' };
-  if (codec.startsWith('hvc1')) return { descKey: 'hevcDecoderConfigRecord', type: 'hvc1' };
+  if (codec.startsWith('avc1'))
+    return { descKey: 'avcDecoderConfigRecord', type: 'avc1' };
+  if (codec.startsWith('hvc1'))
+    return { descKey: 'hevcDecoderConfigRecord', type: 'hvc1' };
   return null;
 }
 
@@ -95,7 +101,10 @@ function parseVideoCodecDesc(track: TrakBoxParser): Uint8Array | undefined {
   return undefined;
 }
 
-function getESDSBoxFromMP4File(file: MP4File, codec = 'mp4a'): ESDSBoxParser | undefined {
+function getESDSBoxFromMP4File(
+  file: MP4File,
+  codec = 'mp4a'
+): ESDSBoxParser | undefined {
   return file.moov?.traks
     .flatMap((t: any) => t.mdia.minf.stbl.stsd.entries)
     .find((entry: any) => entry.type === codec) as ESDSBoxParser | undefined;
@@ -131,7 +140,8 @@ function parseAudioInfoFromESDSBox(esds: ESDSBoxParser): {
   const numberOfChannels = (data[1] & 0x78) >> 3;
 
   const SAMPLE_RATES = [
-    96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350,
+    96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025,
+    8000, 7350,
   ] as const;
 
   return {
@@ -147,14 +157,18 @@ function parseAudioInfoFromESDSBox(esds: ESDSBoxParser): {
 export async function quickParseMP4File(
   reader: Awaited<ReturnType<ReturnType<typeof file>['createReader']>>,
   onReady: (data: { mp4boxFile: MP4File; info: MP4Info }) => void,
-  onSamples: (id: number, sampleType: 'video' | 'audio', samples: MP4Sample[]) => void
+  onSamples: (
+    id: number,
+    sampleType: 'video' | 'audio',
+    samples: MP4Sample[]
+  ) => void
 ) {
   const mp4boxFile = mp4box.createFile(false) as unknown as MP4File;
-  
+
   mp4boxFile.onReady = (info: MP4Info) => {
     onReady({ mp4boxFile, info });
-    
-    [info.videoTracks[0], info.audioTracks[0]].forEach(track => {
+
+    [info.videoTracks[0], info.audioTracks[0]].forEach((track) => {
       if (track) {
         const type = (track as any).video ? 'video' : 'audio';
         mp4boxFile.setExtractionOptions(track.id, type, { nbSamples: 100 });
@@ -163,16 +177,18 @@ export async function quickParseMP4File(
 
     mp4boxFile.start();
   };
-  
+
   mp4boxFile.onSamples = onSamples;
 
   let cursor = 0;
   const CHUNK_SIZE = 30 * 1024 * 1024; // 30MB
 
   while (true) {
-    const data = (await reader.read(CHUNK_SIZE, { at: cursor })) as MP4ArrayBuffer;
+    const data = (await reader.read(CHUNK_SIZE, {
+      at: cursor,
+    })) as MP4ArrayBuffer;
     if (data.byteLength === 0) break;
-    
+
     data.fileStart = cursor;
     const nextPos = mp4boxFile.appendBuffer(data);
     if (nextPos == null) break;
@@ -213,7 +229,11 @@ export function parseMatrix(matrix?: Int32Array) {
 /**
  * Creates a function to rotate VideoFrames using Canvas.
  */
-export function createVFRotater(width: number, height: number, rotationDeg: number) {
+export function createVFRotater(
+  width: number,
+  height: number,
+  rotationDeg: number
+) {
   const normRotation = (Math.round(rotationDeg / 90) * 90 + 360) % 360;
   if (normRotation === 0) return (vf: VideoFrame | null) => vf;
 

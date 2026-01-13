@@ -1,7 +1,7 @@
 import { Log } from '../utils/log';
-import { BaseClip } from "./base-clip";
-import type { IClip } from "./iclip";
-import type { CaptionClipJSON, TextStyleJSON } from "../json-serialization";
+import { BaseClip } from './base-clip';
+import type { IClip } from './iclip';
+import type { CaptionClipJSON, TextStyleJSON } from '../json-serialization';
 import {
   type Application,
   SplitBitmapText,
@@ -12,8 +12,8 @@ import {
   Container,
   Graphics,
   CanvasTextMetrics,
-} from "pixi.js";
-import { isTransparent, parseColor, resolveColor } from "../utils/color";
+} from 'pixi.js';
+import { isTransparent, parseColor, resolveColor } from '../utils/color';
 
 export interface ICaptionClipOpts {
   /**
@@ -45,7 +45,7 @@ export interface ICaptionClipOpts {
     | string
     | number
     | {
-        type: "gradient";
+        type: 'gradient';
         x0: number;
         y0: number;
         x1: number;
@@ -122,7 +122,7 @@ export interface ICaptionClipOpts {
     | {
         color: string | number;
         width: number;
-        join?: "miter" | "round" | "bevel";
+        join?: 'miter' | 'round' | 'bevel';
       };
   /**
    * Stroke width in pixels (used when stroke is a simple color)
@@ -133,7 +133,7 @@ export interface ICaptionClipOpts {
    * Text alignment ('left', 'center', 'right')
    * @default 'center'
    */
-  align?: "left" | "center" | "right";
+  align?: 'left' | 'center' | 'right';
   /**
    * Drop shadow configuration
    */
@@ -168,7 +168,7 @@ export interface ICaptionClipOpts {
    * Text case transformation
    * @default 'none'
    */
-  textCase?: "none" | "uppercase" | "lowercase" | "title";
+  textCase?: 'none' | 'uppercase' | 'lowercase' | 'title';
   /**
    * Media ID to which the captions were applied
    */
@@ -191,8 +191,8 @@ export interface ICaptionClipOpts {
  * captionClip.duration = 3e6; // 3 seconds
  */
 export class CaptionClip extends BaseClip implements IClip {
-  readonly type = "Caption";
-  ready: IClip["ready"];
+  readonly type = 'Caption';
+  ready: IClip['ready'];
 
   private _meta = {
     duration: Infinity,
@@ -223,13 +223,13 @@ export class CaptionClip extends BaseClip implements IClip {
       align: opts.align,
       textCase: opts.textCase,
       stroke: opts.stroke
-        ? typeof opts.stroke === "object"
+        ? typeof opts.stroke === 'object'
           ? { color: opts.stroke.color, width: opts.stroke.width }
           : { color: opts.stroke, width: opts.strokeWidth ?? 0 }
         : undefined,
       shadow: opts.dropShadow
         ? {
-            color: opts.dropShadow.color ?? "#000000",
+            color: opts.dropShadow.color ?? '#000000',
             alpha: opts.dropShadow.alpha ?? 0.5,
             blur: opts.dropShadow.blur ?? 4,
             distance: opts.dropShadow.distance ?? 0,
@@ -256,7 +256,7 @@ export class CaptionClip extends BaseClip implements IClip {
 
     // Handle stroke
     if (v.stroke !== undefined) {
-      if (typeof v.stroke === "object") {
+      if (typeof v.stroke === 'object') {
         newOpts.stroke = {
           color: v.stroke.color,
           width: v.stroke.width,
@@ -292,10 +292,10 @@ export class CaptionClip extends BaseClip implements IClip {
    * Text case proxy
    */
   get textCase(): string {
-    return this.originalOpts?.textCase || "none";
+    return this.originalOpts?.textCase || 'none';
   }
 
-  set textCase(v: "none" | "uppercase" | "lowercase" | "title") {
+  set textCase(v: 'none' | 'uppercase' | 'lowercase' | 'title') {
     this.updateStyle({ textCase: v });
   }
 
@@ -326,7 +326,7 @@ export class CaptionClip extends BaseClip implements IClip {
     startTime: number;
     duration: number;
   }> = [];
-  
+
   /**
    * Words getter for the clip
    */
@@ -349,11 +349,11 @@ export class CaptionClip extends BaseClip implements IClip {
     // Update text property to match words
     this.text = v
       .map((w) => w.text)
-      .filter((t) => t && t.trim() !== "")
-      .join(" ");
+      .filter((t) => t && t.trim() !== '')
+      .join(' ');
 
     this.refreshCaptions().then(() => {
-      this.emit("propsChange", {} as any);
+      this.emit('propsChange', {} as any);
     });
   }
 
@@ -366,12 +366,12 @@ export class CaptionClip extends BaseClip implements IClip {
     fontStyle: string;
     fill: any; // Can be string, number, or gradient object
     strokeWidth: number;
-    align: "left" | "center" | "right";
+    align: 'left' | 'center' | 'right';
     wordWrapWidth: number;
     wordWrap: boolean;
     lineHeight: number;
     letterSpacing: number;
-    textCase: "none" | "uppercase" | "lowercase" | "title";
+    textCase: 'none' | 'uppercase' | 'lowercase' | 'title';
     videoWidth: number;
     videoHeight: number;
     bottomOffset: number;
@@ -396,14 +396,14 @@ export class CaptionClip extends BaseClip implements IClip {
   private wordTexts: SplitBitmapText[] = [];
   private extraPadding = 0;
   private textStyle!: TextStyle;
-  private externalRenderer: Application["renderer"] | null = null;
+  private externalRenderer: Application['renderer'] | null = null;
   private pixiApp: Application | null = null;
   private originalOpts: ICaptionClipOpts | null = null;
 
   constructor(
     text: string,
     opts: ICaptionClipOpts = {},
-    renderer?: Application["renderer"]
+    renderer?: Application['renderer']
   ) {
     super();
     this.text = text;
@@ -415,18 +415,18 @@ export class CaptionClip extends BaseClip implements IClip {
     // Set default options (matching TextClip defaults where applicable)
     this.opts = {
       fontSize: opts.fontSize ?? 30,
-      fontFamily: opts.fontFamily ?? "Arial",
-      fontUrl: opts.fontUrl ?? "",
-      fontWeight: opts.fontWeight ?? "normal",
-      fontStyle: opts.fontStyle ?? "normal",
-      fill: opts.fill ?? "#ffffff",
+      fontFamily: opts.fontFamily ?? 'Arial',
+      fontUrl: opts.fontUrl ?? '',
+      fontWeight: opts.fontWeight ?? 'normal',
+      fontStyle: opts.fontStyle ?? 'normal',
+      fill: opts.fill ?? '#ffffff',
       strokeWidth: opts.strokeWidth ?? 0,
-      align: opts.align ?? "center",
+      align: opts.align ?? 'center',
       wordWrapWidth: opts.wordWrapWidth ?? 0,
       wordWrap: opts.wordWrap ?? false,
       lineHeight: opts.lineHeight ?? 1,
       letterSpacing: opts.letterSpacing ?? 0,
-      textCase: opts.textCase ?? "none",
+      textCase: opts.textCase ?? 'none',
       videoWidth:
         opts.caption?.positioning?.videoWidth ?? opts.videoWidth ?? 1280,
       videoHeight:
@@ -434,18 +434,18 @@ export class CaptionClip extends BaseClip implements IClip {
       bottomOffset:
         opts.caption?.positioning?.bottomOffset ?? opts.bottomOffset ?? 30,
       keyword:
-        opts.caption?.colors?.keyword ?? opts.colors?.keyword ?? "#ffff00",
+        opts.caption?.colors?.keyword ?? opts.colors?.keyword ?? '#ffff00',
       background:
         opts.caption?.colors?.background ??
         opts.colors?.background ??
-        "#000000",
-      active: opts.caption?.colors?.active ?? opts.colors?.active ?? "#ffffff",
+        '#000000',
+      active: opts.caption?.colors?.active ?? opts.colors?.active ?? '#ffffff',
       activeFill:
         opts.caption?.colors?.activeFill ??
         opts.colors?.activeFill ??
-        "#00ff00",
+        '#00ff00',
       appeared:
-        opts.caption?.colors?.appeared ?? opts.colors?.appeared ?? "#ffffff",
+        opts.caption?.colors?.appeared ?? opts.colors?.appeared ?? '#ffffff',
       words: opts.caption?.words ?? opts.words ?? [],
       preserveKeywordColor:
         opts.caption?.preserveKeywordColor ??
@@ -467,8 +467,8 @@ export class CaptionClip extends BaseClip implements IClip {
     // Handle fill - can be color or gradient (same as TextClip)
     if (
       opts.fill &&
-      typeof opts.fill === "object" &&
-      opts.fill.type === "gradient"
+      typeof opts.fill === 'object' &&
+      opts.fill.type === 'gradient'
     ) {
       // Create gradient fill
       const gradient = new FillGradient(
@@ -479,30 +479,30 @@ export class CaptionClip extends BaseClip implements IClip {
       );
       opts.fill.colors.forEach(({ ratio, color }) => {
         const colorNumber =
-          typeof color === "number" ? color : parseColor(color) ?? 0xffffff;
+          typeof color === 'number' ? color : (parseColor(color) ?? 0xffffff);
         gradient.addColorStop(ratio, colorNumber);
       });
       styleOptions.fill = { fill: gradient };
     } else {
       let fillColor: number | undefined;
-      if (opts.fill === "transparent") {
+      if (opts.fill === 'transparent') {
         fillColor = 0xffffff;
       } else if (
-        typeof opts.fill === "string" ||
-        typeof opts.fill === "number"
+        typeof opts.fill === 'string' ||
+        typeof opts.fill === 'number'
       ) {
         fillColor = parseColor(opts.fill);
       }
 
       styleOptions.fill = fillColor ?? 0xffffff;
     }
-    const isTransparent = (color?: any) => color === "transparent";
+    const isTransparent = (color?: any) => color === 'transparent';
 
     // Handle stroke - can be color or advanced stroke object (same as TextClip)
     if (
       opts.stroke &&
-      typeof opts.stroke === "object" &&
-      "color" in opts.stroke
+      typeof opts.stroke === 'object' &&
+      'color' in opts.stroke
     ) {
       if (!isTransparent(opts.stroke.color)) {
         const strokeColor = parseColor(opts.stroke.color);
@@ -553,7 +553,7 @@ export class CaptionClip extends BaseClip implements IClip {
     this.ready = (async () => {
       await this.refreshCaptions();
       const meta = { ...this._meta };
-      Log.info("CaptionClip ready:", meta);
+      Log.info('CaptionClip ready:', meta);
       return meta;
     })();
   }
@@ -589,8 +589,8 @@ export class CaptionClip extends BaseClip implements IClip {
 
     if (
       this.opts.fill &&
-      typeof this.opts.fill === "object" &&
-      this.opts.fill.type === "gradient"
+      typeof this.opts.fill === 'object' &&
+      this.opts.fill.type === 'gradient'
     ) {
       const gradient = new FillGradient(
         this.opts.fill.x0,
@@ -600,13 +600,13 @@ export class CaptionClip extends BaseClip implements IClip {
       );
       this.opts.fill.colors.forEach(({ ratio, color }: any) => {
         const colorNumber =
-          typeof color === "number" ? color : parseColor(color) ?? 0xffffff;
+          typeof color === 'number' ? color : (parseColor(color) ?? 0xffffff);
         gradient.addColorStop(ratio, colorNumber);
       });
       styleOptions.fill = { fill: gradient };
     } else {
       const fillColor =
-        typeof this.opts.fill === "string" || typeof this.opts.fill === "number"
+        typeof this.opts.fill === 'string' || typeof this.opts.fill === 'number'
           ? parseColor(this.opts.fill)
           : undefined;
       styleOptions.fill = fillColor ?? 0xffffff;
@@ -616,8 +616,8 @@ export class CaptionClip extends BaseClip implements IClip {
     if (opts.stroke !== undefined || opts.strokeWidth !== undefined) {
       if (
         this.originalOpts.stroke &&
-        typeof this.originalOpts.stroke === "object" &&
-        "color" in this.originalOpts.stroke
+        typeof this.originalOpts.stroke === 'object' &&
+        'color' in this.originalOpts.stroke
       ) {
         const strokeColor = parseColor(this.originalOpts.stroke.color);
         if (strokeColor !== undefined) {
@@ -662,24 +662,24 @@ export class CaptionClip extends BaseClip implements IClip {
     let totalWidth = 0;
 
     const textCase = this.opts.textCase;
-    const metrics = CanvasTextMetrics.measureText(" ", this.textStyle);
+    const metrics = CanvasTextMetrics.measureText(' ', this.textStyle);
 
     this.wordTexts = this.opts.words.map((word) => {
       let textToRender = word.text;
-      
+
       // Handle empty words by creating an empty container to keep indices aligned
-      if (!textToRender || textToRender.trim() === "") {
+      if (!textToRender || textToRender.trim() === '') {
         const empty = new Container();
-        empty.label = "emptyWord";
+        empty.label = 'emptyWord';
         this.pixiTextContainer!.addChild(empty);
         return empty as any;
       }
 
-      if (textCase === "uppercase") {
+      if (textCase === 'uppercase') {
         textToRender = textToRender.toUpperCase();
-      } else if (textCase === "lowercase") {
+      } else if (textCase === 'lowercase') {
         textToRender = textToRender.toLowerCase();
-      } else if (textCase === "title") {
+      } else if (textCase === 'title') {
         textToRender = textToRender.replace(
           /\w\S*/g,
           (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
@@ -699,7 +699,7 @@ export class CaptionClip extends BaseClip implements IClip {
       const wordHeight = Math.ceil(bounds.height || wordText.height);
 
       maxHeight = Math.max(maxHeight, wordHeight);
-      
+
       currentX += wordWidth + metrics.width;
       totalWidth = currentX - metrics.width;
 
@@ -716,10 +716,10 @@ export class CaptionClip extends BaseClip implements IClip {
 
     // Create semi-transparent background container
     const bgGraphics = new Graphics();
-    bgGraphics.label = "containerBackground";
+    bgGraphics.label = 'containerBackground';
 
     const isTransparentBackground =
-      this.opts.background === "transparent" || !this.opts.background;
+      this.opts.background === 'transparent' || !this.opts.background;
 
     const bgColor = isTransparentBackground
       ? 0x000000
@@ -771,7 +771,7 @@ export class CaptionClip extends BaseClip implements IClip {
         target: this.renderTexture,
       });
     } catch (err) {
-      Log.warn("CaptionClip: Could not render captions during refresh", err);
+      Log.warn('CaptionClip: Could not render captions during refresh', err);
     }
 
     this._meta.width = finalWidth;
@@ -856,14 +856,14 @@ export class CaptionClip extends BaseClip implements IClip {
 
       // Aplicar color al texto
       wordText.children.forEach((child: any) => {
-        if (child.label !== "bgRect") {
+        if (child.label !== 'bgRect') {
           child.tint = textColor;
           child.alpha = textAlpha;
         }
       });
 
       // -------- BACKGROUND --------
-      const existingBg = wordText.getChildByLabel("bgRect") as Graphics | null;
+      const existingBg = wordText.getChildByLabel('bgRect') as Graphics | null;
 
       if (isActive) {
         const { color: bgColor, alpha: bgAlpha } = resolveColor(
@@ -879,7 +879,7 @@ export class CaptionClip extends BaseClip implements IClip {
 
         const bg = existingBg ?? new Graphics();
 
-        bg.label = "bgRect";
+        bg.label = 'bgRect';
         bg.clear();
 
         bg.roundRect(
@@ -914,7 +914,7 @@ export class CaptionClip extends BaseClip implements IClip {
   async getTexture(): Promise<Texture | null> {
     if (this.pixiTextContainer == null || this.renderTexture == null) {
       console.log(
-        "[CaptionClip] getTexture returning null - container or texture not ready"
+        '[CaptionClip] getTexture returning null - container or texture not ready'
       );
       return null;
     }
@@ -936,7 +936,7 @@ export class CaptionClip extends BaseClip implements IClip {
       // RenderTexture extends Texture, so we can return it directly
       return this.renderTexture;
     } catch (error) {
-      console.error("[CaptionClip] Error in getTexture:", error);
+      console.error('[CaptionClip] Error in getTexture:', error);
       return null;
     }
   }
@@ -944,15 +944,15 @@ export class CaptionClip extends BaseClip implements IClip {
   /**
    * Set an external renderer (e.g., from Studio) to avoid creating our own Pixi App
    */
-  setRenderer(renderer: Application["renderer"]): void {
+  setRenderer(renderer: Application['renderer']): void {
     this.externalRenderer = renderer;
   }
 
-  private async getRenderer(): Promise<Application["renderer"]> {
+  private async getRenderer(): Promise<Application['renderer']> {
     if (this.externalRenderer != null) return this.externalRenderer;
     if (this.pixiApp?.renderer == null) {
       throw new Error(
-        "CaptionClip: No renderer available. Provide a renderer via setRenderer()."
+        'CaptionClip: No renderer available. Provide a renderer via setRenderer().'
       );
     }
     return this.pixiApp.renderer;
@@ -960,11 +960,11 @@ export class CaptionClip extends BaseClip implements IClip {
 
   async tick(time: number): Promise<{
     video: ImageBitmap;
-    state: "success";
+    state: 'success';
   }> {
     await this.ready;
     if (this.pixiTextContainer == null || this.renderTexture == null) {
-      throw new Error("CaptionClip not initialized");
+      throw new Error('CaptionClip not initialized');
     }
 
     // Update internal state based on current time (in microseconds)
@@ -994,11 +994,11 @@ export class CaptionClip extends BaseClip implements IClip {
       ) {
         imageBitmap = await createImageBitmap(extractedCanvas);
       } else {
-        throw new Error("Unable to extract canvas from render texture");
+        throw new Error('Unable to extract canvas from render texture');
       }
     }
 
-    return { video: imageBitmap, state: "success" };
+    return { video: imageBitmap, state: 'success' };
   }
 
   async split(_time: number): Promise<[this, this]> {
@@ -1054,7 +1054,7 @@ export class CaptionClip extends BaseClip implements IClip {
 
   destroy(): void {
     if (this.destroyed) return;
-    Log.info("CaptionClip destroy");
+    Log.info('CaptionClip destroy');
 
     // Destroy wordTexts array first
     try {
@@ -1146,7 +1146,7 @@ export class CaptionClip extends BaseClip implements IClip {
 
       // Handle stroke
       if (opts.stroke) {
-        if (typeof opts.stroke === "object") {
+        if (typeof opts.stroke === 'object') {
           style.stroke = {
             color: opts.stroke.color as any,
             width: opts.stroke.width,
@@ -1161,7 +1161,7 @@ export class CaptionClip extends BaseClip implements IClip {
 
       if (opts.dropShadow) {
         style.shadow = {
-          color: (opts.dropShadow.color ?? "#000000") as string,
+          color: (opts.dropShadow.color ?? '#000000') as string,
           alpha: opts.dropShadow.alpha ?? 0.5,
           blur: opts.dropShadow.blur ?? 4,
           distance: opts.dropShadow.distance ?? 0,
@@ -1236,7 +1236,7 @@ export class CaptionClip extends BaseClip implements IClip {
 
     return {
       ...base,
-      type: "Caption",
+      type: 'Caption',
       text: this.text,
       style,
       caption: Object.keys(caption).length > 0 ? caption : undefined,
@@ -1252,12 +1252,12 @@ export class CaptionClip extends BaseClip implements IClip {
    * @returns Promise that resolves to a CaptionClip instance
    */
   static async fromObject(json: CaptionClipJSON): Promise<CaptionClip> {
-    if (json.type !== "Caption") {
+    if (json.type !== 'Caption') {
       throw new Error(`Expected Caption, got ${json.type}`);
     }
 
     // Support new structure (text + style) and old structure (options)
-    const text = json.text || "";
+    const text = json.text || '';
     const style = json.style || {};
 
     // Build options object from style

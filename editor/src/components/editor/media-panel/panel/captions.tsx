@@ -1,31 +1,31 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2 } from "lucide-react";
-import { useStudioStore } from "@/stores/studio-store";
-import { fontManager, jsonToClip, Log, type IClip } from "@designcombo/video";
-import { generateCaptionClips } from "@/lib/caption-generator";
+} from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2 } from 'lucide-react';
+import { useStudioStore } from '@/stores/studio-store';
+import { fontManager, jsonToClip, Log, type IClip } from '@designcombo/video';
+import { generateCaptionClips } from '@/lib/caption-generator';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
   PopoverAnchor,
-} from "@/components/ui/popover";
+} from '@/components/ui/popover';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   Trash,
   MoreHorizontal,
@@ -35,16 +35,18 @@ import {
   CheckCheck,
   X,
   ScanLine,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { addParagraphIndexToWords, buildParagraphsFromCaptions } from "@/utils/caption";
-
+} from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  addParagraphIndexToWords,
+  buildParagraphsFromCaptions,
+} from '@/utils/caption';
 
 export default function PanelCaptions() {
   const { studio } = useStudioStore();
   const [mediaItems, setMediaItems] = useState<IClip[]>([]);
-  const [selectedMediaId, setSelectedMediaId] = useState<string>("");
+  const [selectedMediaId, setSelectedMediaId] = useState<string>('');
   const [captionItems, setCaptionItems] = useState<IClip[]>([]);
   const [paragraphs, setParagraphs] = useState<any[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -64,7 +66,7 @@ export default function PanelCaptions() {
       });
 
       const mediaClips = allClips.filter(
-        (clip: IClip) => clip.type === "Video" || clip.type === "Audio"
+        (clip: IClip) => clip.type === 'Video' || clip.type === 'Audio'
       );
       setMediaItems(mediaClips);
 
@@ -73,14 +75,14 @@ export default function PanelCaptions() {
         selectedMediaId &&
         !mediaClips.find((m: IClip) => m.id === selectedMediaId)
       ) {
-        setSelectedMediaId("");
+        setSelectedMediaId('');
       }
 
       // Find captions for selected media
       if (selectedMediaId) {
         const captions = allClips.filter(
           (clip: IClip) =>
-            clip.type === "Caption" && (clip as any).mediaId === selectedMediaId
+            clip.type === 'Caption' && (clip as any).mediaId === selectedMediaId
         );
         const paragraphs = buildParagraphsFromCaptions(captions);
         setParagraphs(paragraphs);
@@ -97,16 +99,16 @@ export default function PanelCaptions() {
     };
 
     updateClips();
-    studio.on("clip:added", updateClips);
-    studio.on("clip:removed", updateClips);
-    studio.on("clip:updated", updateClips);
-    studio.on("currentTime", handleTimeUpdate);
+    studio.on('clip:added', updateClips);
+    studio.on('clip:removed', updateClips);
+    studio.on('clip:updated', updateClips);
+    studio.on('currentTime', handleTimeUpdate);
 
     return () => {
-      studio.off("clip:added", updateClips);
-      studio.off("clip:removed", updateClips);
-      studio.off("clip:updated", updateClips);
-      studio.off("currentTime", handleTimeUpdate);
+      studio.off('clip:added', updateClips);
+      studio.off('clip:removed', updateClips);
+      studio.off('clip:updated', updateClips);
+      studio.off('currentTime', handleTimeUpdate);
     };
   }, [studio, selectedMediaId]);
 
@@ -123,12 +125,12 @@ export default function PanelCaptions() {
     try {
       // 1. Get transcription
       const audioUrl = (mediaClip as any).src;
-      if (!audioUrl) throw new Error("Media source not found");
+      if (!audioUrl) throw new Error('Media source not found');
 
-      const transcribeResponse = await fetch("/api/transcribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: audioUrl, model: "nova-3" }),
+      const transcribeResponse = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: audioUrl, model: 'nova-3' }),
       });
 
       if (!transcribeResponse.ok) throw new Error(`Transcription failed`);
@@ -142,8 +144,8 @@ export default function PanelCaptions() {
       // 2. Load fonts
       await fontManager.loadFonts([
         {
-          name: "Bangers-Regular",
-          url: "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
+          name: 'Bangers-Regular',
+          url: 'https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf',
         },
       ]);
 
@@ -177,7 +179,7 @@ export default function PanelCaptions() {
         await studio.addClip(clip, { trackId: captionTrackId });
       }
     } catch (error) {
-      Log.error("Failed to generate captions:", error);
+      Log.error('Failed to generate captions:', error);
     } finally {
       setIsGenerating(false);
     }
@@ -196,10 +198,10 @@ export default function PanelCaptions() {
       const changedParagraphs = newParagraphs.filter((newP, idx) => {
         const oldP = paragraphs[idx];
         if (!oldP) return true;
-        
+
         // Simple string comparison as a first pass
         if (newP.text !== oldP.text) return true;
-        
+
         // Deep compare words if text is same (e.g. timing changes, which shouldn't happen here but for safety)
         if (newP.words.length !== oldP.words.length) return true;
         return JSON.stringify(newP.words) !== JSON.stringify(oldP.words);
@@ -212,15 +214,18 @@ export default function PanelCaptions() {
 
       // Find/create caption track
       const tracks = studio.getTracks();
-      const existingCaptionTrack = tracks.find((t) => t.id.startsWith("track_captions"));
-      const captionTrackId = existingCaptionTrack?.id || `track_captions_${Date.now()}`;
+      const existingCaptionTrack = tracks.find((t) =>
+        t.id.startsWith('track_captions')
+      );
+      const captionTrackId =
+        existingCaptionTrack?.id || `track_captions_${Date.now()}`;
 
       for (const p of changedParagraphs) {
         const paragraphIndex = p.paragraphIndex;
-        
+
         // 1. Collect non-empty words for this paragraph
         const filteredWords = p.words
-          .filter((w: any) => w.text && w.text.trim() !== "")
+          .filter((w: any) => w.text && w.text.trim() !== '')
           .map((w: any) => ({
             ...w,
             start: w.start,
@@ -231,9 +236,11 @@ export default function PanelCaptions() {
         // 2. Remove existing clips for this paragraph
         const clipsToRemove = captionItems.filter((c) => {
           const words = (c as any).opts?.words || [];
-          return (c as any).mediaId === selectedMediaId && 
-                 words.length > 0 && 
-                 words[0].paragraphIndex === paragraphIndex;
+          return (
+            (c as any).mediaId === selectedMediaId &&
+            words.length > 0 &&
+            words[0].paragraphIndex === paragraphIndex
+          );
         });
 
         for (const clip of clipsToRemove) {
@@ -270,7 +277,7 @@ export default function PanelCaptions() {
 
       // Local state will be updated by the updateClips effect
     } catch (e) {
-      console.error("Failed to update affected caption paragraphs", e);
+      console.error('Failed to update affected caption paragraphs', e);
     }
   };
 
@@ -290,7 +297,7 @@ export default function PanelCaptions() {
               <SelectContent className="z-[200]">
                 {mediaItems.map((item) => (
                   <SelectItem value={item.id} key={item.id}>
-                    {(item as any).src?.split("/").pop() || item.id}
+                    {(item as any).src?.split('/').pop() || item.id}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -348,7 +355,7 @@ export default function PanelCaptions() {
                       Generating...
                     </>
                   ) : (
-                    "Generate Captions"
+                    'Generate Captions'
                   )}
                 </Button>
               </div>
@@ -387,7 +394,7 @@ function ParagraphView({
   const [anchorIndex, setAnchorIndex] = useState<number | null>(null);
 
   const [editMode, setEditMode] = useState(false);
-  const [editText, setEditText] = useState("");
+  const [editText, setEditText] = useState('');
 
   // Global mouse up listener to ensure isDragging is always reset
   useEffect(() => {
@@ -398,7 +405,7 @@ function ParagraphView({
 
         // Finalize selection text for editing if needed
         if (selectionRange) {
-          let text = "";
+          let text = '';
           let gIdx = 0;
           const min = Math.min(selectionRange.start, selectionRange.end);
           const max = Math.max(selectionRange.start, selectionRange.end);
@@ -411,8 +418,8 @@ function ParagraphView({
             paragraphs.forEach((p: any) =>
               p.words.forEach((w: any) => {
                 if (gIdx >= min && gIdx <= max) {
-                  const wordText = w.text || "";
-                  if (wordText) text += (text ? " " : "") + wordText;
+                  const wordText = w.text || '';
+                  if (wordText) text += (text ? ' ' : '') + wordText;
                 }
                 gIdx++;
               })
@@ -423,8 +430,8 @@ function ParagraphView({
       }
     };
 
-    window.addEventListener("mouseup", handleGlobalMouseUp);
-    return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, [isDragging, selectionRange, paragraphs]);
 
   const getGlobalWordIndex = (pIdx: number, wIdx: number) => {
@@ -439,11 +446,11 @@ function ParagraphView({
     let currentIdx = 0;
     for (const p of paragraphs) {
       for (const w of p.words) {
-        if (currentIdx === idx) return w.text || "";
+        if (currentIdx === idx) return w.text || '';
         currentIdx++;
       }
     }
-    return "";
+    return '';
   };
 
   const handleApply = () => {
@@ -463,11 +470,11 @@ function ParagraphView({
           updates.push({ index: currentGlobalIdx, text: editText });
           wordObj.text = editText;
         } else if (currentGlobalIdx > minIdx && currentGlobalIdx <= maxIdx) {
-          updates.push({ index: currentGlobalIdx, text: "" });
-          wordObj.text = "";
+          updates.push({ index: currentGlobalIdx, text: '' });
+          wordObj.text = '';
         }
       });
-      p.text = p.words.map((w: any) => w.text).join(" ");
+      p.text = p.words.map((w: any) => w.text).join(' ');
     });
 
     onUpdateParagraphs(newParagraphs, updates);
@@ -480,7 +487,7 @@ function ParagraphView({
       return 0;
     const targetWord = getWordAtGlobalIndex(selectionRange.start);
     if (!targetWord) return 0;
-    
+
     let count = 0;
     paragraphs.forEach((p: any) => {
       p.words.forEach((w: any) => {
@@ -508,7 +515,7 @@ function ParagraphView({
           wordObj.text = editText;
         }
       });
-      p.text = p.words.map((w: any) => w.text).join(" ");
+      p.text = p.words.map((w: any) => w.text).join(' ');
     });
 
     onUpdateParagraphs(newParagraphs, updates);
@@ -530,11 +537,11 @@ function ParagraphView({
       p.words.forEach((wordObj: any) => {
         const currentGlobalIdx = globalIdx++;
         if (currentGlobalIdx >= minIdx && currentGlobalIdx <= maxIdx) {
-          updates.push({ index: currentGlobalIdx, text: "" });
-          wordObj.text = "";
+          updates.push({ index: currentGlobalIdx, text: '' });
+          wordObj.text = '';
         }
       });
-      p.text = p.words.map((w: any) => w.text).join(" ");
+      p.text = p.words.map((w: any) => w.text).join(' ');
     });
 
     onUpdateParagraphs(newParagraphs, updates);
@@ -550,7 +557,7 @@ function ParagraphView({
     // Flatten all words to find the ones in range
     const allWords: any[] = [];
     paragraphs.forEach((p) => allWords.push(...p.words));
-    
+
     const selectedWords = allWords.slice(minIdx, maxIdx + 1);
     if (selectedWords.length === 0) {
       setSelectionRange(null);
@@ -567,10 +574,10 @@ function ParagraphView({
     try {
       // 1. Perform ripple delete on the timeline
       await (studio.timeline as any).rippleDelete(fromUs, toUs);
-      
+
       // 2. The updateClips effect will handle refreshing the paragraphs state
     } catch (e) {
-      console.error("Failed to remove caption and video:", e);
+      console.error('Failed to remove caption and video:', e);
     } finally {
       setSelectionRange(null);
     }
@@ -581,28 +588,30 @@ function ParagraphView({
       {paragraphs.map((paragraph, index) => {
         // paragraph.from and paragraph.to are in microseconds
         const isActive =
-          timeInMicroseconds >= paragraph.from && timeInMicroseconds < paragraph.to;
+          timeInMicroseconds >= paragraph.from &&
+          timeInMicroseconds < paragraph.to;
 
         return (
           <div
             key={index}
             className={`flex flex-col gap-2 rounded-lg p-3 transition-colors ${
               isActive
-                ? "bg-primary/5 border border-primary/20"
-                : "bg-muted/30 border border-transparent hover:bg-muted/50"
+                ? 'bg-primary/5 border border-primary/20'
+                : 'bg-muted/30 border border-transparent hover:bg-muted/50'
             }`}
           >
             <div
               className="text-xs font-mono opacity-70 cursor-pointer hover:underline"
               onClick={() => onSeek(paragraph.from / 1000000)}
             >
-              {formatTime(paragraph.from / 1000000)} - {formatTime(paragraph.to / 1000000)}
+              {formatTime(paragraph.from / 1000000)} -{' '}
+              {formatTime(paragraph.to / 1000000)}
             </div>
             <div className="text-sm leading-relaxed">
               <span className="flex flex-wrap gap-y-1">
                 {paragraph.words.map((wordObj: any, wordIdx: number) => {
                   const globalIdx = getGlobalWordIndex(index, wordIdx);
-                  const word = wordObj.text || "";
+                  const word = wordObj.text || '';
 
                   const isInRange =
                     selectionRange &&
@@ -611,27 +620,33 @@ function ParagraphView({
                     globalIdx <=
                       Math.max(selectionRange.start, selectionRange.end);
 
-                  const minRange = selectionRange ? Math.min(selectionRange.start, selectionRange.end) : -1;
-                  const maxRange = selectionRange ? Math.max(selectionRange.start, selectionRange.end) : -1;
+                  const minRange = selectionRange
+                    ? Math.min(selectionRange.start, selectionRange.end)
+                    : -1;
+                  const maxRange = selectionRange
+                    ? Math.max(selectionRange.start, selectionRange.end)
+                    : -1;
                   const isStartRange = isInRange && globalIdx === minRange;
                   const isEndRange = isInRange && globalIdx === maxRange;
-                  
+
                   // Check if the next word is also in range for highlighting the space
-                  const isNextInRange = selectionRange && 
-                                       (globalIdx + 1) >= minRange && 
-                                       (globalIdx + 1) <= maxRange && 
-                                       globalIdx < maxRange;
+                  const isNextInRange =
+                    selectionRange &&
+                    globalIdx + 1 >= minRange &&
+                    globalIdx + 1 <= maxRange &&
+                    globalIdx < maxRange;
 
                   const isSelected =
                     !!selectionRange && globalIdx === selectionRange.start;
-                  
-                  const roundingClass = !selectionRange || minRange === maxRange
-                    ? "rounded-sm"
-                    : isStartRange
-                    ? "rounded-l-sm rounded-r-none"
-                    : isEndRange
-                    ? "rounded-r-sm rounded-l-none"
-                    : "rounded-none";
+
+                  const roundingClass =
+                    !selectionRange || minRange === maxRange
+                      ? 'rounded-sm'
+                      : isStartRange
+                        ? 'rounded-l-sm rounded-r-none'
+                        : isEndRange
+                          ? 'rounded-r-sm rounded-l-none'
+                          : 'rounded-none';
 
                   return (
                     <span key={wordIdx} className="inline-flex items-center">
@@ -646,7 +661,9 @@ function ParagraphView({
                         <PopoverAnchor asChild>
                           <span
                             className={`cursor-pointer transition-colors px-[2px] ${roundingClass} hover:bg-neutral-700/50 select-none ${
-                                isInRange ? "bg-neutral-700/50 text-white" : "text-muted-foreground hover:text-white"
+                              isInRange
+                                ? 'bg-neutral-700/50 text-white'
+                                : 'text-muted-foreground hover:text-white'
                             }`}
                             onMouseDown={(e) => {
                               e.stopPropagation();
@@ -671,7 +688,7 @@ function ParagraphView({
                               }
                             }}
                           >
-                            {word || "\u00A0"}
+                            {word || '\u00A0'}
                           </span>
                         </PopoverAnchor>
                         <PopoverContent
@@ -689,32 +706,26 @@ function ParagraphView({
                                 <Textarea
                                   autoFocus
                                   value={editText}
-                                  onChange={(e) =>
-                                    setEditText(e.target.value)
-                                  }
+                                  onChange={(e) => setEditText(e.target.value)}
                                   className="bg-neutral-800 text-white border-[#333] rounded-sm px-2 py-1 h-auto min-h-[80px] w-[240px] outline-none resize-none"
                                   onKeyDown={(e) => {
                                     if (
-                                      e.key === "Enter" &&
+                                      e.key === 'Enter' &&
                                       (e.metaKey || e.ctrlKey)
                                     )
                                       handleApply();
-                                    if (e.key === "Escape")
-                                      setEditMode(false);
+                                    if (e.key === 'Escape') setEditMode(false);
                                   }}
                                 />
                               ) : (
                                 <Input
                                   autoFocus
                                   value={editText}
-                                  onChange={(e) =>
-                                    setEditText(e.target.value)
-                                  }
+                                  onChange={(e) => setEditText(e.target.value)}
                                   className="bg-neutral-800 text-white border-[#333] rounded-sm px-2 py-1 h-8 w-[240px] outline-none"
                                   onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleApply();
-                                    if (e.key === "Escape")
-                                      setEditMode(false);
+                                    if (e.key === 'Enter') handleApply();
+                                    if (e.key === 'Escape') setEditMode(false);
                                   }}
                                 />
                               )}
@@ -856,18 +867,18 @@ function CaptionItem({
     <div
       className={`flex flex-col gap-1 rounded-lg p-3 transition-colors cursor-pointer border ${
         isActive
-          ? "bg-primary/10 border-primary text-primary"
-          : "bg-muted/30 border-transparent hover:bg-muted/50 text-muted-foreground"
+          ? 'bg-primary/10 border-primary text-primary'
+          : 'bg-muted/30 border-transparent hover:bg-muted/50 text-muted-foreground'
       }`}
       onClick={onClick}
     >
       <div className="text-[10px] font-mono opacity-70">
-        {formatTime(item.display.from / 1000000)} -{" "}
+        {formatTime(item.display.from / 1000000)} -{' '}
         {formatTime(item.display.to / 1000000)}
       </div>
       <div
         className={`text-xs leading-relaxed font-medium ${
-          isActive ? "text-foreground" : ""
+          isActive ? 'text-foreground' : ''
         }`}
       >
         {(item as any).text}
@@ -882,10 +893,10 @@ function formatTime(seconds: number) {
   const s = Math.floor(seconds % 60);
   const ms = Math.floor((seconds % 1) * 100);
 
-  const hh = h > 0 ? `${h.toString().padStart(2, "0")}:` : "";
-  const mm = m.toString().padStart(2, "0");
-  const ss = s.toString().padStart(2, "0");
-  const mms = ms.toString().padStart(2, "0");
+  const hh = h > 0 ? `${h.toString().padStart(2, '0')}:` : '';
+  const mm = m.toString().padStart(2, '0');
+  const ss = s.toString().padStart(2, '0');
+  const mms = ms.toString().padStart(2, '0');
 
   return `${hh}${mm}:${ss}.${mms}`;
 }

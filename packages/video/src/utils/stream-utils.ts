@@ -33,7 +33,6 @@ export function autoReadStream<ST extends ReadableStream>(
   };
 }
 
-
 export function file2stream(
   file: MP4File,
   timeSlice: number,
@@ -59,7 +58,6 @@ export function file2stream(
     if (sendedBoxIdx >= boxes.length) return null;
 
     const ds = new mp4box.DataStream();
-
 
     let i = sendedBoxIdx;
     try {
@@ -126,7 +124,6 @@ export function file2stream(
     },
   };
 }
-
 
 function unsafeReleaseMP4BoxFile(file: MP4File) {
   if (file.moov == null) return;

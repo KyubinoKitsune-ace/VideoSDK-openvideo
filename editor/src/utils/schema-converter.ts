@@ -63,11 +63,11 @@ export const groupWordsByWidth = (
         width: currentWidth, // Actual measured width
         height: textHeight || fontSize, // Actual measured height, fallback to fontSize
         words: currentWords.map((w, idx) => ({
-          text: (w.word || w.text || ''),
+          text: w.word || w.text || '',
           from: idx === 0 ? 0 : (w.start - firstWord.start) * 1000, // Relative to caption start in ms
           to: (w.end - firstWord.start) * 1000, // Relative to caption start in ms
           isKeyWord: idx === 0 || idx === currentWords.length - 1, // First and last words are keywords
-          paragraphIndex: w.paragraphIndex ?? "",
+          paragraphIndex: w.paragraphIndex ?? '',
         })),
         from: firstWord.start, // In seconds
         to: lastWord.end, // In seconds
@@ -93,17 +93,17 @@ export const groupWordsByWidth = (
     const metrics = ctx.measureText('AaFfLMZpPqQ');
     const textHeight =
       metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-    
+
     captions.push({
       text: currentText,
       width: currentWidth, // Actual measured width
       height: textHeight || fontSize, // Actual measured height, fallback to fontSize
       words: currentWords.map((w, idx) => ({
-        text: (w.word || w.text || ''),
+        text: w.word || w.text || '',
         from: idx === 0 ? 0 : (w.start - firstWord.start) * 1000,
         to: (w.end - firstWord.start) * 1000,
         isKeyWord: idx === 0 || idx === currentWords.length - 1,
-        paragraphIndex: w.paragraphIndex ?? "",
+        paragraphIndex: w.paragraphIndex ?? '',
       })),
       from: firstWord.start,
       to: lastWord.end,

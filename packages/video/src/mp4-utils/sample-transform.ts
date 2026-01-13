@@ -1,8 +1,11 @@
 import { MP4ArrayBuffer, MP4File, MP4Info, MP4Sample, mp4box } from 'wrapbox';
 
-export type TransformChunk = 
+export type TransformChunk =
   | { chunkType: 'ready'; data: { info: MP4Info; file: MP4File } }
-  | { chunkType: 'samples'; data: { id: number; type: 'video' | 'audio'; samples: MP4Sample[] } };
+  | {
+      chunkType: 'samples';
+      data: { id: number; type: 'video' | 'audio'; samples: MP4Sample[] };
+    };
 
 /**
  * Transforms a raw byte stream into an MP4Sample stream using mp4box.js.
@@ -48,16 +51,23 @@ export class SampleTransform {
       abort: (reason) => {
         Log.error('SampleTransform writable aborted:', reason);
         file.stop();
-      }
+      },
     });
   }
 
-  private initMP4Box(file: MP4File, controller: ReadableStreamDefaultController<TransformChunk>) {
+  private initMP4Box(
+    file: MP4File,
+    controller: ReadableStreamDefaultController<TransformChunk>
+  ) {
     file.onReady = (info: MP4Info) => {
       // Set extraction options for video and audio tracks
-      [info.videoTracks[0], info.audioTracks[0]].forEach(track => {
+      [info.videoTracks[0], info.audioTracks[0]].forEach((track) => {
         if (track) {
-          file.setExtractionOptions(track.id, (track as any).video ? 'video' : 'audio', { nbSamples: 100 });
+          file.setExtractionOptions(
+            track.id,
+            (track as any).video ? 'video' : 'audio',
+            { nbSamples: 100 }
+          );
         }
       });
 
@@ -67,17 +77,22 @@ export class SampleTransform {
 
     const releasedSamplesCount: Record<number, number> = {};
 
-    file.onSamples = (id: number, type: 'video' | 'audio', samples: MP4Sample[]) => {
+    file.onSamples = (
+      id: number,
+      type: 'video' | 'audio',
+      samples: MP4Sample[]
+    ) => {
       // Create independent copies of samples to ensure safe transfer
-      const samplesCopy = samples.map(s => ({ ...s }));
-      
+      const samplesCopy = samples.map((s) => ({ ...s }));
+
       controller.enqueue({
         chunkType: 'samples',
         data: { id, type, samples: samplesCopy },
       });
 
       // Release processed samples to free memory
-      releasedSamplesCount[id] = (releasedSamplesCount[id] ?? 0) + samples.length;
+      releasedSamplesCount[id] =
+        (releasedSamplesCount[id] ?? 0) + samples.length;
       file.releaseUsedSamples(id, releasedSamplesCount[id]);
     };
 

@@ -110,7 +110,6 @@ function fixMP4BoxFileDuration(
 
     const ds = new mp4box.DataStream();
 
-
     for (let i = startIdx; i < source.length; i++) {
       if (source[i] === null) continue;
       source[i].write(ds);
@@ -485,7 +484,9 @@ export function mixinMP4AndAudio(
       } else if (chunkType === 'samples') {
         const { id, type, samples } = data;
         if (type === 'video') {
-          samples.forEach((s) => outfile.addSample(id, new Uint8Array(s.data), s));
+          samples.forEach((s) =>
+            outfile.addSample(id, new Uint8Array(s.data), s)
+          );
 
           if (!mp4HasAudio) await addInputAudio2Track(samples);
           return;

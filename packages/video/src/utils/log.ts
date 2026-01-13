@@ -22,7 +22,9 @@ function any2Str(val: any): string {
   if (val instanceof Error) return String(val);
   if (typeof val === 'object' && val !== null) {
     try {
-      return JSON.stringify(val, (_, v) => (v instanceof Error ? String(v) : v));
+      return JSON.stringify(val, (_, v) =>
+        v instanceof Error ? String(v) : v
+      );
     } catch {
       return String(val);
     }
@@ -41,12 +43,18 @@ class InternalLogger {
   private threshold: LogLevel = LogLevel.INFO;
   private history: HistoryEntry[] = [];
 
-  public debug = (...args: any[]) => this.log(LogLevel.DEBUG, console.debug, args);
+  public debug = (...args: any[]) =>
+    this.log(LogLevel.DEBUG, console.debug, args);
   public info = (...args: any[]) => this.log(LogLevel.INFO, console.info, args);
   public warn = (...args: any[]) => this.log(LogLevel.WARN, console.warn, args);
-  public error = (...args: any[]) => this.log(LogLevel.ERROR, console.error, args);
+  public error = (...args: any[]) =>
+    this.log(LogLevel.ERROR, console.error, args);
 
-  private log(level: LogLevel, consoleMethod: (...args: any[]) => void, args: any[]) {
+  private log(
+    level: LogLevel,
+    consoleMethod: (...args: any[]) => void,
+    args: any[]
+  ) {
     if (level >= this.threshold) {
       consoleMethod(...args);
       this.history.push({
@@ -76,8 +84,9 @@ class InternalLogger {
 
   public dump(): string {
     return this.history
-      .map(({ level, time, args }) => 
-        `[${level.toUpperCase()}][${time}] ${args.map(any2Str).join(' ')}`
+      .map(
+        ({ level, time, args }) =>
+          `[${level.toUpperCase()}][${time}] ${args.map(any2Str).join(' ')}`
       )
       .join('\n');
   }
@@ -116,7 +125,6 @@ export const Log = {
    */
   dump: async () => logger.dump(),
 };
-
 
 // Set initial log levels based on environment
 if (import.meta.env?.DEV) {

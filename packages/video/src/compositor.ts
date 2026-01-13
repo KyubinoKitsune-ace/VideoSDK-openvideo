@@ -15,8 +15,8 @@ import {
   EffectClip,
 } from './clips';
 import { recodemux } from 'wrapbox';
-import {Log} from "./utils/log"
-import {file2stream} from "./utils/stream-utils"
+import { Log } from './utils/log';
+import { file2stream } from './utils/stream-utils';
 import EventEmitter from './event-emitter';
 import { PixiSpriteRenderer } from './sprite/pixi-sprite-renderer';
 import { parseColor } from './utils/color';
@@ -148,7 +148,6 @@ export class Compositor extends EventEmitter<{
   private opts: Required<ICompositorOpts>;
 
   private hasVideoTrack: boolean;
-
 
   /**
    * Create a compositor instance based on configuration
