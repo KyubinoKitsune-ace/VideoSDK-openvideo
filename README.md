@@ -1,73 +1,67 @@
-# Combo - AI Video Editor
+# @designcombo/video
 
-An advanced, AI-powered video editor that leverages **WebCodecs API** for high-performance client-side video rendering. This project allows users to create, edit, and export videos directly in the browser with the power of AI.
+A high-performance video rendering and processing library for the web, built with WebCodecs and PixiJS.
 
 ## Features
 
-### 🤖 AI-Powered Capabilities
-- **AI Copilot**: Chat-based editing assistant to generate scripts, change visuals, and control the timeline.
-- **Script Generation**: Integrated with **OpenAI** and **Gemini** to create engaging video scripts from simple prompts.
-- **Text-to-Speech**: High-quality voice synthesization using **ElevenLabs** for professional voiceovers.
-- **Auto-Captions**: Automatic transcription and caption generation using **Deepgram**.
+- **Browser-Based Rendering**: Leverages modern WebCodecs for efficient video encoding and decoding directly in the browser.
+- **Advanced Composition**: Powered by [PixiJS](https://pixijs.com/) for complex multi-track layering, transforms, and real-time previews.
+- **Universal Clip Support**: Built-in support for Video, Audio, Image, Text, and Captions.
+- **Dynamic Effects & Transitions**: Extensible GLSL-based effects (Chromakey, etc.) and transitions.
+- **JSON Serialization**: Full project state can be serialized to and from JSON for easy persistence and cloud rendering.
+- **Low Latency**: Optimized for interactive video editing experiences.
 
-### 🎬 Professional Video Editing
-- **Multi-Track Timeline**: Advanced timeline for managing video, audio, image, and text tracks.
-- **Client-Side Rendering**: Fast, private, and server-free rendering using the **WebCodecs API**.
-- **Rich Media Editing**: Trim, split, resize, rotate, and position elements with precision.
-- **Transitions & Effects**: Built-in library of transitions and visual effects to enhance your videos.
+## Installation
 
-### 🎨 Assets & Media
-- **Stock Library Integration**: Direct access to royalty-free images and videos from **Pexels** and **Freepik**.
-- **Media Uploads**: Easy drag-and-drop upload for your own videos, images, and audio files.
-- **Cloud Storage**: Secure asset management compatible with S3/R2.
+```bash
+npm install @designcombo/video
+```
 
-### 🚀 Export & Integration
-- **Social Media Ready**: Optimized export presets for TikTok, Instagram Reels, and YouTube Shorts.
-- **High-Quality Export**: Export videos in MP4 format up to 4K resolution.
+## Quick Start
 
-## Getting Started
+### Basic Composition
 
-### Prerequisites
+```typescript
+import { Compositor, VideoClip, Studio } from '@designcombo/video';
 
-- **Node.js** (v18 or higher recommended)
-- **pnpm** (Package Manager)
+// 1. Initialize the Studio (Project State)
+const studio = new Studio({
+  width: 1920,
+  height: 1080,
+  fps: 30
+});
 
-### Installation
+// 2. Add a Video Clip
+const clip = new VideoClip({
+  src: 'https://example.com/video.mp4',
+  start: 0,
+  duration: 5000, // 5 seconds
+});
+studio.addClip(clip);
 
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/designcombo/ai-video-editor.git
-    cd ai-video-editor
-    ```
+// 3. Initialize the Compositor
+const compositor = new Compositor({
+  studio,
+  canvas: document.getElementById('preview-canvas') as HTMLCanvasElement
+});
 
-2.  Install dependencies:
-    ```bash
-    pnpm install
-    ```
+// 4. Start Preview / Rendering
+compositor.play();
+```
 
-3.  Configure environment variables:
-     Copy the sample environment file to `.env`:
-    ```bash
-    cp .env.sample .env
-    ```
-    > **Note**: You will need to obtain API keys for services like OpenAI, ElevenLabs, and others to fully utilize the AI features.
+## Core Components
 
-4.  Run the development server:
-    ```bash
-    pnpm dev
-    ```
+- **`Studio`**: Manages the project state, including tracks, clips, and timeline configuration.
+- **`Compositor`**: The rendering engine that handles playback, seeking, and final export using WebCodecs.
+- **`Clips`**: Specialized objects for different media types (`VideoClip`, `AudioClip`, `TextClip`, etc.).
+- **`JsonSerialization`**: Utilities to convert your entire project into a portable JSON format.
 
-5.  Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Technology Stack
+
+- **WebCodecs**: For ultra-fast, hardware-accelerated video processing.
+- **PixiJS**: For a robust and performant 2D/3D rendering engine.
+- **wrapbox**: Internal utility for low-level MP4 box manipulation and muxing.
 
 ## License
 
-**Combo** is dual-licensed:
-
-1.  **Personal Use**: Free for personal, non-commercial use. You are welcome to explore the code, modify it, and use it for your own personal projects.
-2.  **Commercial Use**: Any commercial usage of this software requires a valid commercial license from **DesignCombo**.
-
-For commercial licensing inquiries, please contact **DesignCombo**.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+See [LICENSE](LICENSE).

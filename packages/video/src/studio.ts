@@ -1,0 +1,1703 @@
+import {
+  Application,
+  Sprite,
+  Texture,
+  Container,
+  Graphics,
+  RenderTexture,
+} from 'pixi.js';
+
+import { CaptionClip } from './clips/caption-clip';
+import { ImageClip } from './clips/image-clip';
+import type { IClip, IPlaybackCapable } from './clips/iclip';
+import { TextClip } from './clips/text-clip';
+import { VideoClip } from './clips/video-clip';
+import { EffectClip } from './clips/effect-clip';
+import {
+  PixiSpriteRenderer,
+  updateSpriteTransform,
+} from './sprite/pixi-sprite-renderer';
+import { type ProjectJSON } from './json-serialization';
+import { Transformer } from './transfomer/transformer';
+import type { EffectKey } from './effect/glsl/gl-effect';
+import { makeEffect } from './effect/effect';
+import { makeTransition } from './transition/transition';
+
+import EventEmitter from './event-emitter';
+
+export interface IStudioOpts {
+  width: number;
+  height: number;
+  fps?: number;
+  bgColor?: string;
+  canvas?: HTMLCanvasElement;
+  interactivity?: boolean;
+}
+
+interface ActiveGlobalEffect {
+  id: string;
+  key: EffectKey;
+  startTime: number;
+  duration: number;
+  trackIndex?: number;
+}
+interface GlobalEffectInfo {
+  id: string;
+  key: EffectKey;
+  startTime: number;
+  duration: number;
+}
+
+export interface StudioEvents {
+  'selection:created': { selected: IClip[] };
+  'selection:updated': { selected: IClip[] };
+  'selection:cleared': { deselected: IClip[] };
+  'track:added': { track: StudioTrack };
+  'track:removed': { trackId: string };
+  'clip:added': { clip: IClip; trackId: string };
+  'clip:removed': { clipId: string };
+  'clip:updated': { clip: IClip };
+  currentTime: { currentTime: number };
+  play: { isPlaying: boolean };
+  pause: { isPlaying: boolean };
+  [key: string]: any;
+  [key: symbol]: any;
+}
+
+export interface StudioTrack {
+  id: string;
+  name: string;
+  type: string;
+  clipIds: string[];
+}
+
+/**
+ * Interactive preview studio for clips with playback controls
+ * Useful for previewing clips before rendering with Compositor
+ *
+ * @example
+ * const studio = new Studio({
+ *   width: 1280,
+ *   height: 720,
+ *   fps: 30,
+ *   bgColor: '#000'
+ * });
+ *
+ * await studio.addClip(spr1);
+ * await studio.addClip(spr2);
+ * studio.play();
+ *
+ * studio.on('selection:created', ({ selected }) => {
+ *   console.log('Selection created', selected);
+ * });
+ */
+import { SelectionManager } from './studio/selection-manager';
+import { Transport } from './studio/transport';
+import { TimelineModel } from './studio/timeline-model';
+
+export class Studio extends EventEmitter<StudioEvents> {
+  public selection: SelectionManager;
+  public transport: Transport;
+  public timeline: TimelineModel;
+  public pixiApp: Application | null = null;
+  public get tracks() {
+    return this.timeline.tracks;
+  }
+  public get clips() {
+    return this.timeline.clips;
+  }
+  // BUT I need to remove the getter/setter I added in previous step.
+  // And restoring `private clips` property.
+
+  public spriteRenderers = new Map<IClip, PixiSpriteRenderer>();
+  public artboard: Container | null = null;
+  public clipContainer: Container | null = null;
+  public artboardMask: Graphics | null = null;
+  public artboardBg: Graphics | null = null;
+
+  // Transformer for interactive transform controls
+  // Transformer for interactive transform controls
+  // Delegated to SelectionManager
+  public get activeTransformer(): Transformer | null {
+    return this.selection.activeTransformer;
+  }
+  public set activeTransformer(val: Transformer | null) {
+    this.selection.activeTransformer = val;
+  }
+
+  public get selectedClips(): Set<IClip> {
+    return this.selection.selectedClips;
+  }
+  public set selectedClips(val: Set<IClip>) {
+    this.selection.selectedClips = val;
+  }
+
+  public get interactiveClips(): Set<IClip> {
+    return this.selection.interactiveClips;
+  }
+  public set interactiveClips(val: Set<IClip>) {
+    this.selection.interactiveClips = val;
+  }
+
+  // Playback elements for clips that support playback
+  public get playbackElements() {
+    return this.transport.playbackElements;
+  }
+
+  public videoSprites = new Map<IClip, Sprite>();
+  public clipListeners = new Map<IClip, () => void>();
+  // Only for VideoClip
+
+  public get isPlaying() {
+    return this.transport.isPlaying;
+  }
+  public set isPlaying(val: boolean) {
+    this.transport.isPlaying = val;
+  }
+
+  public get currentTime() {
+    return this.transport.currentTime;
+  }
+  public set currentTime(val: number) {
+    this.transport.currentTime = val;
+  }
+
+  public get maxDuration() {
+    return this.transport.maxDuration;
+  }
+  public set maxDuration(val: number) {
+    this.transport.maxDuration = val;
+  }
+
+  public opts: Required<Omit<IStudioOpts, 'canvas'>> & {
+    canvas?: HTMLCanvasElement;
+  };
+  public destroyed = false;
+
+  // Effect system
+  public globalEffects = new Map<string, GlobalEffectInfo>();
+  public activeGlobalEffect: ActiveGlobalEffect | null = null;
+  // private postProcessContainer: Container; // Removed
+  public currentGlobalEffectSprite: Sprite | null = null;
+  public effectFilters = new Map<string, ReturnType<typeof makeEffect>>();
+  public transitionRenderers = new Map<
+    string,
+    ReturnType<typeof makeTransition>
+  >();
+  public transitionSprites = new Map<string, Sprite>();
+  public transFromTexture: RenderTexture | null = null;
+  public transToTexture: RenderTexture | null = null;
+  public transBgGraphics: Graphics | null = null;
+  public clipsNormalContainer: Container | null = null;
+  public clipsEffectContainer: Container | null = null;
+  public videoTextureCache = new WeakMap<HTMLVideoElement, Texture>();
+  public lastFromFrame: Texture | ImageBitmap | null = null;
+  public lastToFrame: Texture | ImageBitmap | null = null;
+  /**
+   * Convert hex color string to number
+   */
+  private hexToNumber(hex: string): number {
+    // Remove # if present
+    const hexStr = hex.startsWith('#') ? hex.slice(1) : hex;
+    return parseInt(hexStr, 16);
+  }
+
+  public ready: Promise<void>;
+  /**
+   * Create a new Studio instance
+   */
+  constructor(opts: IStudioOpts) {
+    super();
+    // this.postProcessContainer = new Container(); // Removed
+    this.opts = {
+      fps: 30,
+      bgColor: '#000000',
+      interactivity: true,
+      ...opts,
+    };
+
+    this.selection = new SelectionManager(this);
+    this.transport = new Transport(this);
+    this.timeline = new TimelineModel(this);
+    this.ready = this.initPixiApp();
+
+    this.on('clip:removed', this.handleClipRemoved);
+    this.on('clip:updated', this.handleTimelineChange);
+    this.on('clip:added', this.handleTimelineChange);
+    this.on('track:removed', this.handleTimelineChange);
+    this.on('track:added', this.handleTimelineChange);
+  }
+
+  private handleTimelineChange = () => {
+    // Force a re-render of the current frame to reflect changes
+    this.updateFrame(this.currentTime);
+  };
+
+  private handleClipRemoved = ({ clipId }: { clipId: string }) => {
+    // 1. Cleanup SpriteRenderers
+    for (const [clip, renderer] of this.spriteRenderers) {
+      if (clip.id === clipId) {
+        // Remove from parent if possible (renderer.getRoot() exists)
+        const root = renderer.getRoot();
+        if (root && root.parent) {
+          root.parent.removeChild(root);
+        }
+        renderer.destroy();
+        this.spriteRenderers.delete(clip);
+        break; // Assuming 1:1 map
+      }
+    }
+
+    // 2. Cleanup Transition Sprites
+    const transSprite = this.transitionSprites.get(clipId);
+    if (transSprite) {
+      if (transSprite.parent) {
+        transSprite.parent.removeChild(transSprite);
+      }
+      transSprite.destroy();
+      this.transitionSprites.delete(clipId);
+    }
+
+    // 3. Cleanup Transition Renderers
+    const transRenderer = this.transitionRenderers.get(clipId);
+    if (transRenderer) {
+      // transRenderer might not have destroy, just remove from map
+      this.transitionRenderers.delete(clipId);
+    }
+
+    // 4. Cleanup Video Sprites
+    for (const [clip, sprite] of this.videoSprites) {
+      if (clip.id === clipId) {
+        if (sprite.parent) {
+          sprite.parent.removeChild(sprite);
+        }
+        sprite.destroy();
+        this.videoSprites.delete(clip);
+        break;
+      }
+    }
+
+    // 5. Cleanup Clip Listeners
+    for (const [clip] of this.clipListeners) {
+      if (clip.id === clipId) {
+        this.clipListeners.delete(clip);
+        break;
+      }
+    }
+
+    this.updateFrame(this.currentTime);
+  };
+
+  private async initPixiApp(): Promise<void> {
+    if (this.destroyed) return;
+
+    const canvas = this.opts.canvas || document.createElement('canvas');
+    canvas.width = this.opts.width;
+    canvas.height = this.opts.height;
+
+    // Create the Application instance but only assign it to `this.pixiApp`
+    // after initialization completes successfully. This avoids a race where
+    // `destroy()` may be called while the Application is partially
+    // initialized and its internal renderer is not yet available.
+    console.log('Initializing Pixi.js Application...', {
+      width: this.opts.width,
+      height: this.opts.height,
+    });
+    const app = new Application();
+    // Use the parent element for resizing if available, otherwise fallback to window
+    // This allows the Pixi canvas to fill its container (Player component)
+    const resizeTo = canvas.parentElement || window;
+
+    await app.init({
+      canvas,
+      resizeTo, // Auto-resize to fill the container
+      // width/height are derived from resizeTo, so we don't set them explicitly for the renderer
+      backgroundColor: this.hexToNumber(this.opts.bgColor),
+      antialias: true,
+      resolution: window.devicePixelRatio || 1,
+      autoDensity: true,
+    });
+    this.pixiApp = app;
+
+    // Make stage interactive to handle clicks on empty space
+    app.stage.eventMode = 'static';
+    app.stage.hitArea = app.screen;
+
+    // Initialize Artboard (Root Container for Viewport)
+    this.artboard = new Container();
+    this.artboard.label = 'ArtboardRoot';
+    app.stage.addChild(this.artboard);
+
+    this.selection.init(app, this.artboard);
+
+    // Create background for Artboard (in clip container)
+    this.artboardBg = new Graphics();
+    this.artboardBg
+      .rect(0, 0, this.opts.width, this.opts.height)
+      .fill({ color: 0x000000 });
+    this.artboard.addChild(this.artboardBg);
+
+    // Initialize Clip Container (Masked Content)
+    this.clipContainer = new Container();
+    this.clipContainer.label = 'ClipContainer';
+    this.artboard.addChild(this.clipContainer);
+    // Create mask for Clip Container
+    this.artboardMask = new Graphics();
+    this.artboardMask
+      .rect(0, 0, this.opts.width, this.opts.height)
+      .fill({ color: 0xffffff });
+    this.clipContainer.addChild(this.artboardMask);
+    this.clipContainer.mask = this.artboardMask;
+
+    //effectContainer
+    this.clipsEffectContainer = new Container();
+    this.clipsEffectContainer.label = 'ClipsEffect';
+    this.clipsEffectContainer.visible = false;
+    this.clipsEffectContainer.zIndex = 1; // Lowest
+    this.clipsEffectContainer.sortableChildren = true;
+    this.clipContainer.addChild(this.clipsEffectContainer);
+
+    this.clipsNormalContainer = new Container();
+    this.clipsNormalContainer.label = 'ClipsNormal';
+    this.clipsNormalContainer.zIndex = 10; // Highest (above effect)
+    this.clipsNormalContainer.sortableChildren = true;
+    this.clipContainer.addChild(this.clipsNormalContainer);
+
+    // Initialize Transition helper objects
+    this.transFromTexture = RenderTexture.create({
+      width: this.opts.width,
+      height: this.opts.height,
+    });
+    this.transToTexture = RenderTexture.create({
+      width: this.opts.width,
+      height: this.opts.height,
+    });
+    this.transBgGraphics = new Graphics();
+    this.transBgGraphics.rect(0, 0, this.opts.width, this.opts.height).fill({
+      color: 0x000000,
+      alpha: 0,
+    });
+
+    // Enable sorting on parent to respect zIndex
+    this.clipContainer.sortableChildren = true;
+
+    // Artboard itself is NOT masked, so children added directly to it (like transformer)
+    // will be visible outside the bounds.
+
+    // Initial positioning
+    this.updateArtboardLayout();
+
+    // Listen for resize from Pixi renderer (since we used resizeTo)
+    // This handles both window resize and container resize automatically
+    app.renderer.on('resize', () => {
+      this.handleResize();
+    });
+    // Removed postProcessContainer usage
+  }
+
+  /**
+   * Get studio options
+   */
+  public getOptions(): IStudioOpts {
+    return this.opts;
+  }
+
+  /**
+   * Update studio dimensions
+   */
+  public updateDimensions(width: number, height: number) {
+    this.opts.width = width;
+    this.opts.height = height;
+
+    if (this.artboardBg) {
+      this.artboardBg
+        .clear()
+        .rect(0, 0, width, height)
+        .fill({ color: 0x333333 });
+    }
+    if (this.artboardMask) {
+      this.artboardMask
+        .clear()
+        .rect(0, 0, width, height)
+        .fill({ color: 0xffffff });
+    }
+
+    if (this.transFromTexture) {
+      this.transFromTexture.resize(width, height);
+    }
+    if (this.transToTexture) {
+      this.transToTexture.resize(width, height);
+    }
+    if (this.transBgGraphics) {
+      this.transBgGraphics
+        .clear()
+        .rect(0, 0, width, height)
+        .fill({ color: 0x000000, alpha: 0 });
+    }
+
+    this.updateArtboardLayout();
+    this.updateFrame(this.currentTime);
+  }
+
+  private handleResize = () => {
+    if (this.destroyed || !this.pixiApp) return;
+    this.updateArtboardLayout();
+  };
+
+  private updateArtboardLayout() {
+    if (!this.pixiApp || !this.artboard) return;
+
+    // Canvas size (container size)
+    const canvasWidth = this.pixiApp.canvas.width;
+    const canvasHeight = this.pixiApp.canvas.height; // Use clientHeight/width? pixiApp.canvas should mirror it if resizeTo is set?
+    // Wait, pixiApp init with explicit width/height initially.
+    // We want the canvas to be responsive. Player component will make it responsive.
+    // AND pixiApp should verify the canvas size.
+    // If Player uses explicit size, we need to respect that.
+    // BUT we want 'canvas should take full size of preview container'.
+    // AND 'artboard should be centered... zoom in the canvas'.
+    // Ideally, Player CSS makes canvas 100% 100%. Pixi App resizing logic:
+
+    // We manually calculate scale
+    // Artboard logical size
+    const artboardWidth = this.opts.width;
+    const artboardHeight = this.opts.height;
+
+    // Available space
+    // NOTE: pixiApp.canvas might not report the CSS size immediately correctly if not using resizeTo?
+    // Let's rely on the canvas element's clientWidth/Height
+    const containerWidth =
+      (this.pixiApp.canvas as HTMLCanvasElement).parentElement?.clientWidth ||
+      canvasWidth;
+    const containerHeight =
+      (this.pixiApp.canvas as HTMLCanvasElement).parentElement?.clientHeight ||
+      canvasHeight;
+
+    // Calculate scale to fit artboard in container
+    // 'zoom in the canvas' -> scaling the artboard
+    const scaleX = containerWidth / artboardWidth;
+    const scaleY = containerHeight / artboardHeight;
+    const scale = Math.min(scaleX, scaleY); // Fit entirely? Or User said 'apply some zoom...'.
+    // User said: 'instead of apply transfrom scale ... it should apply some zoom in the canvas and center it'
+    // AND 'canvas should take full size of preview container'
+    // So yes, scale Artboard to fit (or maybe margin?). Let's stick to fit.
+
+    // Apply scale and center
+    this.artboard.scale.set(scale);
+
+    // Center logic
+    // (containerWidth - artboardWidth * scale) / 2
+    this.artboard.x = (containerWidth - artboardWidth * scale) / 2;
+    this.artboard.y = (containerHeight - artboardHeight * scale) / 2;
+
+    // Ensure mask is correct scale/pos?
+    // Mask is child of artboard, so it scales with it.
+    // But mask should match Artboard LOGICAL size.
+    // width/height passed to graphics.rect was opts.width/opts.height. Correct.
+  }
+
+  /**
+   * Get the canvas element (creates one if not provided)
+   */
+  getCanvas(): HTMLCanvasElement {
+    if (this.opts.canvas) {
+      return this.opts.canvas;
+    }
+    if (this.pixiApp?.canvas) {
+      return this.pixiApp.canvas as HTMLCanvasElement;
+    }
+    throw new Error(
+      'Canvas not initialized yet. Wait for initPixiApp to complete.'
+    );
+  }
+
+  /**
+   * Add a Media clip (Video/Image) to the main track with ripple effect
+   */
+  /**
+   * Add a Media clip (Video/Image) to the main track with ripple effect
+   */
+  async addMedia(clip: VideoClip | ImageClip): Promise<void> {
+    return this.timeline.addMedia(clip);
+  }
+
+  async addTransition(
+    transitionKey: string,
+    duration: number = 2000000,
+    fromClipId?: string | null,
+    toClipId?: string | null
+  ): Promise<void> {
+    return this.timeline.addTransition(
+      transitionKey,
+      duration,
+      fromClipId,
+      toClipId
+    );
+  }
+
+  findTrackIdByClipId(clipId: string): string | undefined {
+    return this.timeline.findTrackIdByClipId(clipId);
+  }
+
+  /**
+   * Add a clip to the studio
+   * @param clip The clip to add
+   * @param audioSource Optional audio source (URL, File, or Blob) for AudioClip playback
+   */
+  async addClip(
+    clip: IClip,
+    options?:
+      | {
+          trackId?: string;
+          audioSource?: string | File | Blob;
+        }
+      | string
+      | File
+      | Blob
+  ): Promise<void> {
+    return this.timeline.addClip(clip, options);
+  }
+
+  /**
+   * Add a new track to the studio
+   */
+  addTrack(track: { name: string; type: string; id?: string }): StudioTrack {
+    return this.timeline.addTrack(track);
+  }
+
+  async setTracks(tracks: StudioTrack[]): Promise<void> {
+    return this.timeline.setTracks(tracks);
+  }
+
+  async removeTrack(trackId: string): Promise<void> {
+    return this.timeline.removeTrack(trackId);
+  }
+
+  /**
+   * Get a clip by its ID
+   */
+  public getClipById(id: string): IClip | undefined {
+    return this.timeline.getClipById(id);
+  }
+
+  async updateClip(id: string, updates: Partial<IClip>): Promise<void> {
+    return this.timeline.updateClip(id, updates);
+  }
+
+  getTracks(): StudioTrack[] {
+    return this.timeline.tracks;
+  }
+
+  getClip(id: string): IClip | undefined {
+    return this.timeline.getClipById(id);
+  }
+
+  /**
+   * Setup sprite interactivity for click selection
+   * Delegated to SelectionManager
+   */
+  public setupSpriteInteractivity(clip: IClip): void {
+    this.selection.setupSpriteInteractivity(clip);
+  }
+
+  /**
+   * Setup playback element for a clip (if it supports playback)
+   */
+
+  /**
+   * Remove a clip from the studio
+   */
+  async removeClip(clip: IClip): Promise<void> {
+    return this.timeline.removeClip(clip);
+  }
+
+  async removeClipById(clipId: string): Promise<void> {
+    return this.timeline.removeClipById(clipId);
+  }
+
+  async deleteSelected(): Promise<void> {
+    return this.timeline.deleteSelected();
+  }
+
+  /**
+   * Duplicate all currently selected clips
+   */
+  async duplicateSelected(): Promise<void> {
+    return this.timeline.duplicateSelected();
+  }
+
+  async splitSelected(splitTime?: number): Promise<void> {
+    return this.timeline.splitSelected(splitTime);
+  }
+
+  async trimSelected(trimFromSeconds: number): Promise<void> {
+    return this.timeline.trimSelected(trimFromSeconds);
+  }
+
+  async updateSelected(updates: Partial<IClip>): Promise<void> {
+    return this.timeline.updateSelected(updates);
+  }
+
+  /**
+   * Clear all clips from the studio
+   */
+  async clear(): Promise<void> {
+    await this.timeline.clear();
+
+    // Clear Studio-specific textures
+    if (this.transFromTexture) {
+      this.transFromTexture.destroy(true);
+      this.transFromTexture = null;
+    }
+    if (this.transToTexture) {
+      this.transToTexture.destroy(true);
+      this.transToTexture = null;
+    }
+    if (this.transBgGraphics) {
+      this.transBgGraphics.destroy(true);
+      this.transBgGraphics = null;
+    }
+
+    this.emit('reset');
+  }
+
+  /**
+   * Start playback
+   */
+  async play(): Promise<void> {
+    return this.transport.play();
+  }
+
+  /**
+   * Pause playback
+   */
+  pause(): void {
+    this.transport.pause();
+  }
+
+  /**
+   * Stop playback and reset to start
+   */
+  async stop(): Promise<void> {
+    return this.transport.stop();
+  }
+
+  /**
+   * Seek to a specific time (in microseconds)
+   */
+  async seek(time: number): Promise<void> {
+    return this.transport.seek(time);
+  }
+
+  /**
+   * Get current playback time (in microseconds)
+   */
+  getCurrentTime(): number {
+    return this.transport.currentTime;
+  }
+
+  /**
+   * Get maximum duration (in microseconds)
+   */
+  getMaxDuration(): number {
+    return this.transport.maxDuration;
+  }
+
+  /**
+   * Check if currently playing
+   */
+  getIsPlaying(): boolean {
+    return this.transport.isPlaying;
+  }
+
+  /**
+   * Get currently selected clips
+   */
+  getSelectedClips(): IClip[] {
+    return Array.from(this.selectedClips);
+  }
+
+  // renderLoop deleted (moved to PlaybackController)
+
+  private getVideoTexture(video: HTMLVideoElement): Texture {
+    let texture = this.videoTextureCache.get(video);
+    if (!texture) {
+      texture = Texture.from(video);
+      this.videoTextureCache.set(video, texture);
+    }
+    return texture;
+  }
+  private isPlaybackCapable(clip: IClip): clip is IClip & IPlaybackCapable {
+    return (
+      'createPlaybackElement' in clip &&
+      'play' in clip &&
+      'pause' in clip &&
+      'seek' in clip &&
+      'syncPlayback' in clip &&
+      'cleanupPlayback' in clip
+    );
+  }
+
+  public async updateFrame(timestamp: number): Promise<void> {
+    if (this.destroyed || this.pixiApp == null) return;
+    this.updateActiveGlobalEffect(timestamp);
+
+    // We will reset visibility only for sprites that are NOT used this frame
+    // to avoid flickering due to async gaps.
+    const usedTransitionSprites = new Set<string>();
+    // Apply Z-index based on track order
+    // Track 0 (Top) should have highest Z-index
+    // This ensures correct visual stacking even when clips are re-parented
+    const totalTracks = this.tracks.length;
+    for (const clip of this.clips) {
+      const trackIndex = this.getTrackIndex(clip.id);
+      if (trackIndex !== -1) {
+        // Track 0 -> Highest Z
+        const zIndex = (totalTracks - trackIndex) * 10;
+        clip.zIndex = zIndex;
+
+        // Also update sprite zIndex immediately so Pixi sortableChildren works
+        const renderer = this.spriteRenderers.get(clip);
+        if (renderer) {
+          const root = renderer.getRoot();
+          if (root) {
+            root.zIndex = zIndex;
+          }
+        }
+      }
+    }
+
+    // Sort clips by zIndex
+    const sortedClips = [...this.clips].sort((a, b) => a.zIndex - b.zIndex);
+
+    // Update each clip
+    for (const clip of sortedClips) {
+      // Check if clip is before its display time
+      if (timestamp < clip.display.from) {
+        const inactiveRenderer = this.spriteRenderers.get(clip);
+        if (inactiveRenderer != null) {
+          await inactiveRenderer.updateFrame(null);
+        }
+
+        // Pause playback if it exists (fix for audio leak on split)
+        const playbackInfo = this.playbackElements.get(clip);
+        if (playbackInfo != null && this.isPlaybackCapable(clip)) {
+          clip.pause(playbackInfo.element);
+        }
+        continue;
+      }
+
+      // Check if clip is after its display time (display.to)
+      if (clip.display.to > 0 && timestamp >= clip.display.to) {
+        const inactiveRenderer = this.spriteRenderers.get(clip);
+        if (inactiveRenderer != null) {
+          await inactiveRenderer.updateFrame(null);
+        }
+
+        // Pause playback if it exists (fix for audio leak on split)
+        const playbackInfo = this.playbackElements.get(clip);
+        if (playbackInfo != null && this.isPlaybackCapable(clip)) {
+          clip.pause(playbackInfo.element);
+        }
+        continue;
+      }
+
+      const relativeTime = timestamp - clip.display.from;
+      const spriteTime = relativeTime * clip.playbackRate;
+
+      // Update animation
+      clip.animate(spriteTime);
+
+      // Check if clip has exceeded its duration (different from display.to)
+      const meta = await clip.ready;
+      const clipDuration = clip.duration || meta.duration;
+      if (clipDuration > 0 && relativeTime >= clipDuration) {
+        const inactiveRenderer = this.spriteRenderers.get(clip);
+        if (inactiveRenderer != null) {
+          await inactiveRenderer.updateFrame(null);
+        }
+
+        // Pause playback if it exists (fix for audio leak on split)
+        const playbackInfo = this.playbackElements.get(clip);
+        if (playbackInfo != null && this.isPlaybackCapable(clip)) {
+          clip.pause(playbackInfo.element);
+        }
+        continue;
+      }
+
+      // Handle playback elements (VideoClip and AudioClip)
+      const playbackInfo = this.playbackElements.get(clip);
+
+      const isTransitionable =
+        clip instanceof VideoClip || clip instanceof ImageClip;
+      const transitionStartTime = clip.transition ? clip.transition.start! : 0;
+      const transitionEndTime = clip.transition ? clip.transition.end! : 0;
+      const inTransition =
+        isTransitionable &&
+        clip.transition &&
+        timestamp >= transitionStartTime &&
+        timestamp < transitionEndTime;
+
+      if (playbackInfo != null && this.isPlaybackCapable(clip)) {
+        const playbackRelativeTime = relativeTime / 1e6; // Convert to seconds
+
+        // Sync playback using clip method
+        clip.syncPlayback(
+          playbackInfo.element,
+          this.isPlaying,
+          playbackRelativeTime
+        );
+
+        // For VideoClip, handle sprite visibility
+        if (clip instanceof VideoClip) {
+          const videoSprite = this.videoSprites.get(clip);
+          if (videoSprite != null) {
+            const clipDurationSeconds = clip.meta.duration / 1e6;
+            const hasCustomRenderer = this.spriteRenderers.has(clip);
+
+            // If we also have a PixiSpriteRenderer for this clip (e.g. chromakey),
+            // treat the HTMLVideoElement as audio-only and don't show its sprite.
+            // Otherwise, use the video sprite for rendering.
+            if (!hasCustomRenderer) {
+              videoSprite.visible =
+                !inTransition &&
+                playbackRelativeTime >= 0 &&
+                playbackRelativeTime < clipDurationSeconds;
+              if (videoSprite.visible) {
+                updateSpriteTransform(clip, videoSprite);
+              }
+
+              // No custom renderer, so we can skip further processing for this clip
+              // unless we are in transition (in which case we need to fall through to the transition block)
+              if (!inTransition) {
+                continue;
+              }
+            } else {
+              videoSprite.visible = false;
+            }
+          }
+        } else {
+          // Audio-only clip, skip video rendering - safe to continue as they don't have transitions
+          continue;
+        }
+      }
+
+      if (inTransition) {
+        // Inicialización lazy de texturas
+        if (!this.transFromTexture) {
+          this.transFromTexture = RenderTexture.create({
+            width: this.opts.width,
+            height: this.opts.height,
+          });
+        }
+        if (!this.transToTexture) {
+          this.transToTexture = RenderTexture.create({
+            width: this.opts.width,
+            height: this.opts.height,
+          });
+        }
+        if (!this.transBgGraphics) {
+          this.transBgGraphics = new Graphics();
+          this.transBgGraphics
+            .rect(0, 0, this.opts.width, this.opts.height)
+            .fill({ color: 0x000000, alpha: 0 }); // fondo default
+        }
+
+        const fromClip = this.getClipById(clip?.transition?.fromClipId!);
+        const toClip = this.getClipById(clip?.transition?.toClipId!);
+
+        let fromFrame: ImageBitmap | Texture | null = null;
+        let toFrame: ImageBitmap | Texture | null = null;
+
+        // Captura frame estático "from"
+        if (fromClip) {
+          const fromRelativeTime = Math.max(
+            0,
+            timestamp - fromClip.display.from
+          );
+
+          const { video } = await fromClip.getFrame(fromRelativeTime);
+
+          if (video instanceof HTMLVideoElement) {
+            fromFrame = this.getVideoTexture(video);
+          } else {
+            fromFrame = video;
+          }
+
+          if (fromFrame) {
+            this.lastFromFrame = fromFrame;
+          }
+        }
+
+        // Captura frame estático "to"
+        if (toClip) {
+          const toRelativeTime = Math.max(0, timestamp - toClip.display.from);
+
+          const { video } = await toClip.getFrame(toRelativeTime);
+
+          if (video instanceof HTMLVideoElement) {
+            toFrame = this.getVideoTexture(video);
+          } else {
+            toFrame = video;
+          }
+
+          if (toFrame) {
+            this.lastToFrame = toFrame;
+          }
+        }
+
+        if (!fromFrame) fromFrame = this.lastFromFrame;
+        if (!toFrame) toFrame = this.lastToFrame;
+        if (!fromFrame || !toFrame) {
+          continue;
+        }
+        if (
+          fromFrame &&
+          toFrame &&
+          this.pixiApp &&
+          this.transFromTexture &&
+          this.transToTexture
+        ) {
+          const progress =
+            (timestamp - transitionStartTime) / clip?.transition?.duration!;
+
+          // Renderizar "from" frame en la textura
+          if (fromClip && fromFrame) {
+            this.renderClipToTransitionTexture(
+              fromClip,
+              fromFrame,
+              this.transFromTexture
+            );
+          }
+          // Renderizar "to" frame en la textura
+          if (toClip && toFrame) {
+            this.renderClipToTransitionTexture(
+              toClip,
+              toFrame,
+              this.transToTexture
+            );
+          }
+
+          // Crear o reutilizar renderer de transición
+          let transRenderer = this.transitionRenderers.get(clip.id);
+          if (!transRenderer) {
+            try {
+              transRenderer = makeTransition({
+                name: clip?.transition?.name as any,
+                renderer: this.pixiApp.renderer,
+              });
+              this.transitionRenderers.set(clip.id, transRenderer);
+            } catch (err) {
+              console.error(
+                `[Studio] Failed to create transition renderer:`,
+                err
+              );
+            }
+          }
+
+          if (transRenderer) {
+            const transTexture = transRenderer.render({
+              width: this.opts.width,
+              height: this.opts.height,
+              from: this.transFromTexture,
+              to: this.transToTexture,
+              progress,
+            });
+
+            // Mostrar transición
+            let transSprite = this.transitionSprites.get(clip.id);
+            if (!transSprite) {
+              transSprite = new Sprite();
+              transSprite.label = `TransitionSprite_${clip.id}`;
+              this.transitionSprites.set(clip.id, transSprite);
+              if (this.clipsNormalContainer) {
+                this.clipsNormalContainer.addChild(transSprite);
+              }
+            }
+
+            transSprite.texture = transTexture;
+            transSprite.visible = true;
+            transSprite.x = 0;
+            transSprite.y = 0;
+            transSprite.width = this.opts.width;
+            transSprite.height = this.opts.height;
+            transSprite.anchor.set(0, 0);
+            transSprite.zIndex = clip.zIndex;
+            usedTransitionSprites.add(clip.id);
+
+            // Ocultar clips reales durante la transición
+            const renderer = this.spriteRenderers.get(clip);
+            if (renderer?.getRoot()) renderer.getRoot()!.visible = false;
+            const videoSprite = this.videoSprites.get(clip);
+            if (videoSprite) videoSprite.visible = false;
+
+            if (fromClip) {
+              const prevRenderer = this.spriteRenderers.get(fromClip);
+              if (prevRenderer?.getRoot())
+                prevRenderer.getRoot()!.visible = false;
+              const prevVideoSprite = this.videoSprites.get(fromClip);
+              if (prevVideoSprite) prevVideoSprite.visible = false;
+            }
+
+            continue;
+          }
+        }
+      }
+
+      // Hide transition sprite if not active for any clip in this loop
+      // (Actually we should probably reset it at start of updateFrame)
+
+      // Handle clips rendered via PixiSpriteRenderer (ImageClip, MP4 with
+      // tickInterceptor/chromakey, etc)
+      const renderer = this.spriteRenderers.get(clip);
+      if (renderer != null) {
+        // Skip transform updates if this is the selected clip being transformed
+        // The transformer directly manipulates the sprite, so we don't want to overwrite it
+        const isSelected = this.selectedClips.has(clip);
+
+        // Optimized path: Check if clip has a Texture (e.g., ImageClip.fromUrl, TextClip)
+        // This avoids ImageBitmap → Canvas → Texture conversion
+        if (clip instanceof ImageClip) {
+          const texture = clip.getTexture();
+          if (texture != null) {
+            // Use Texture directly for optimized rendering
+            await renderer.updateFrame(texture);
+            // Only update transforms if not currently being transformed
+            if (!isSelected) {
+              renderer.updateTransforms();
+            }
+            continue;
+          }
+        }
+
+        // Optimized path for TextClip: Use Texture directly
+        // This avoids Text → RenderTexture → ImageBitmap → Canvas → Texture conversion
+        if (clip instanceof TextClip) {
+          const texture = await clip.getTexture();
+          if (texture != null) {
+            // Use Texture directly for optimized rendering
+            await renderer.updateFrame(texture);
+            // Only update transforms if not currently being transformed
+            if (!isSelected) {
+              renderer.updateTransforms();
+            }
+            continue;
+          }
+        }
+
+        // Optimized path for CaptionClip: Use Texture directly
+        // This avoids Text → RenderTexture → ImageBitmap → Canvas → Texture conversion
+        if (clip instanceof CaptionClip) {
+          // Update caption highlighting based on current time before rendering
+          clip.updateState(relativeTime);
+          const texture = await clip.getTexture();
+          if (texture != null) {
+            // Use Texture directly for optimized rendering
+            await renderer.updateFrame(texture);
+            // Only update transforms if not currently being transformed
+            if (!isSelected) {
+              renderer.updateTransforms();
+            }
+            if (this.opts.interactivity) {
+              this.selection.setupSpriteInteractivity(clip);
+            }
+            continue;
+          } else {
+            console.log(
+              '[Studio] CaptionClip texture is null, falling back to traditional path'
+            );
+          }
+        }
+
+        // Traditional path: Get frame data
+        const { video: frameVideo } = await clip.getFrame(relativeTime);
+
+        // Update renderer with new frame
+        // PixiSpriteRenderer will handle sprite creation and stage addition on first frame
+        // Always call updateFrame - it will handle visibility internally
+        // This ensures smooth updates without blinking
+        await renderer.updateFrame(frameVideo);
+
+        // Update transforms after frame update
+        // Only update transforms if not currently being transformed
+        if (!isSelected) {
+          renderer.updateTransforms();
+        }
+
+        if (this.opts.interactivity) {
+          this.selection.setupSpriteInteractivity(clip);
+        }
+
+        // Note: done flag is handled by duration check above
+      }
+    }
+
+    // Render global effects
+    if (
+      this.activeGlobalEffect &&
+      this.clipsNormalContainer &&
+      this.clipsEffectContainer
+    ) {
+      const { startTime, duration } = this.activeGlobalEffect;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(Math.max(elapsed / duration, 0), 1);
+
+      if (progress > 0 && progress < 1) {
+        try {
+          for (const c of this.clips) {
+            this.moveClipToEffectContainer(c, false);
+          }
+
+          // Check if active effect is an EffectClip (Adjustment Layer)
+          const isAdjustmentLayer = this.clips.some(
+            (c) =>
+              c.id === this.activeGlobalEffect!.id && c instanceof EffectClip
+          );
+
+          for (const c of this.clips) {
+            let shouldApply = false;
+
+            if (isAdjustmentLayer) {
+              // Apply to all clips except the effect clip itself
+              // AND ensure the clip is on a track 'below' the effect track
+              // In typical timeline rendering:
+              // Track 0 (Top) -> Index 0
+              // Track N (Bottom) -> Index N
+              // 'Below' means Track Index > Effect Track Index
+              const effectTrackIndex =
+                this.activeGlobalEffect!.trackIndex ?? -1;
+              const clipTrackIndex = this.getTrackIndex(c.id);
+
+              shouldApply =
+                c.id !== this.activeGlobalEffect!.id &&
+                !(c instanceof EffectClip) &&
+                clipTrackIndex > effectTrackIndex;
+            } else {
+              const effects = (c as any).effects;
+              shouldApply =
+                Array.isArray(effects) &&
+                effects.some(
+                  (e: any) => e && e.id === this.activeGlobalEffect!.id
+                );
+            }
+
+            if (shouldApply) {
+              this.moveClipToEffectContainer(c, true);
+            }
+          }
+        } catch (err) {
+          console.warn(
+            'Failed to reparent clips for effect; falling back to full-scene render',
+            err
+          );
+        }
+
+        this.clipsNormalContainer.visible = true;
+        await this.applyGlobalEffectIfNeeded(timestamp);
+      } else {
+        for (const c of this.clips) {
+          try {
+            this.moveClipToEffectContainer(c, false);
+          } catch (err) {
+            // non-fatal
+          }
+        }
+
+        this.clipsNormalContainer.visible = true;
+        // Cleanup effect sprite if previously added
+        if (this.currentGlobalEffectSprite) {
+          if (this.currentGlobalEffectSprite.parent) {
+            this.currentGlobalEffectSprite.parent.removeChild(
+              this.currentGlobalEffectSprite
+            );
+          }
+          this.currentGlobalEffectSprite.destroy();
+          this.currentGlobalEffectSprite = null;
+        }
+      }
+    } else {
+      if (this.clipsNormalContainer) {
+        for (const c of this.clips) {
+          try {
+            this.moveClipToEffectContainer(c, false);
+          } catch (err) {
+            /* ignore */
+          }
+        }
+
+        this.clipsNormalContainer.visible = true;
+        // Cleanup effect sprite
+        if (this.currentGlobalEffectSprite) {
+          if (this.currentGlobalEffectSprite.parent) {
+            this.currentGlobalEffectSprite.parent.removeChild(
+              this.currentGlobalEffectSprite
+            );
+          }
+          this.currentGlobalEffectSprite.destroy();
+          this.currentGlobalEffectSprite = null;
+        }
+      }
+    }
+
+    // Finally, hide any transition sprites that were NOT used this frame
+    for (const [clipId, sprite] of this.transitionSprites.entries()) {
+      if (!usedTransitionSprites.has(clipId)) {
+        sprite.visible = false;
+      }
+    }
+
+    // Render the scene
+    if (this.pixiApp != null) {
+      this.pixiApp.render();
+    }
+  }
+
+  /**
+   * Apply global effect to the current scene
+   */
+
+  moveClipToEffectContainer(clip: IClip, toEffect: boolean = true): void {
+    if (!this.clipsNormalContainer || !this.clipsEffectContainer) return;
+
+    const target = toEffect
+      ? this.clipsEffectContainer
+      : this.clipsNormalContainer;
+
+    // 1. Move the regular clip sprite
+    const renderer = this.spriteRenderers.get(clip);
+    if (renderer) {
+      const root = renderer.getRoot();
+      if (root && root.parent !== target) {
+        try {
+          if (root.parent && (root.parent as Container).removeChild) {
+            (root.parent as Container).removeChild(root);
+          }
+        } catch (err) {
+          console.warn(
+            'moveClipToEffectContainer: could not remove root from parent',
+            err
+          );
+        }
+        target.addChild(root);
+      }
+    }
+
+    // 2. Move the transition sprite (if exists)
+    const transSprite = this.transitionSprites.get(clip.id);
+    if (transSprite && transSprite.parent !== target) {
+      try {
+        if (
+          transSprite.parent &&
+          (transSprite.parent as Container).removeChild
+        ) {
+          (transSprite.parent as Container).removeChild(transSprite);
+        }
+      } catch (err) {
+        console.warn(
+          'moveClipToEffectContainer: could not remove transSprite from parent',
+          err
+        );
+      }
+      target.addChild(transSprite);
+    }
+  }
+
+  applyGlobalEffect(
+    key: EffectKey,
+    options: {
+      startTime: number;
+      duration?: number;
+      id?: string;
+    },
+    clips: IClip[]
+  ): string {
+    const id =
+      options.id ||
+      `${key}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const effect = {
+      id,
+      key,
+      startTime: options.startTime,
+      duration: options.duration ?? 1_000_000,
+    };
+    for (const clip of clips) {
+      if (clip instanceof ImageClip) {
+        clip.addEffect(effect);
+      }
+      if (clip instanceof VideoClip) {
+        clip.addEffect(effect);
+      }
+      if (clip instanceof TextClip) {
+        clip.addEffect(effect);
+      }
+      if (clip instanceof CaptionClip) {
+        clip.addEffect(effect);
+      }
+    }
+    this.globalEffects.set(id, effect);
+
+    return id;
+  }
+
+  getTrackIndex(clipId: string): number {
+    return this.tracks.findIndex((t) => t.clipIds.includes(clipId));
+  }
+
+  /**
+   * Get the frame from the previous clip on the same track for transition
+   */
+  public async getTransitionFromFrame(
+    clip: IClip,
+    timestamp: number
+  ): Promise<ImageBitmap | null | Texture> {
+    let prevClip: IClip | null = null;
+
+    // 1. Try explicit pairing first
+    if (clip.transition?.prevClipId) {
+      prevClip =
+        this.clips.find((c) => c.id === clip.transition!.prevClipId) || null;
+    }
+
+    // 2. Fallback to track heuristic
+    if (!prevClip) {
+      prevClip = this.getPreviousClipOnTrack(clip);
+    }
+    if (!prevClip) return null;
+
+    // Calculate relative time for the "from" clip
+    // If clips overlap, we use the current absolute timestamp
+    // If they are back-to-back, we clamp to the end of the previous clip
+    const prevClipDuration = prevClip.duration > 0 ? prevClip.duration : 0;
+    const prevRelativeTime = Math.max(
+      0,
+      Math.min(timestamp - prevClip.display.from, prevClipDuration)
+    );
+
+    const { video } = await prevClip.getFrame(prevRelativeTime);
+    return video;
+  }
+
+  private getPreviousClipOnTrack(clip: IClip): IClip | null {
+    const trackIndex = this.getTrackIndex(clip.id);
+    if (trackIndex === -1) return null;
+
+    return (
+      this.clips
+        .filter(
+          (c) =>
+            c.id !== clip.id &&
+            this.getTrackIndex(c.id) === trackIndex &&
+            c.display.from < clip.display.from &&
+            (c instanceof VideoClip || c instanceof ImageClip)
+        )
+        .sort((a, b) => b.display.to - a.display.to)[0] || null
+    );
+  }
+
+  /**
+   * Renders a clip frame onto a transition texture with red background
+   */
+  private renderClipToTransitionTexture(
+    clip: IClip,
+    frame: ImageBitmap | Texture,
+    target: RenderTexture
+  ): void {
+    if (!this.pixiApp || !this.transBgGraphics) return;
+
+    // 1. Clear with Background Color (0x000000, alpha 0)
+    // We temporarily set renderer background alpha to 0 to ensure we clear to transparent
+    const oldAlpha = this.pixiApp.renderer.background.alpha;
+    this.pixiApp.renderer.background.alpha = 0;
+
+    // Using the renderer's render method with clear: true and a background container
+    this.pixiApp.renderer.render({
+      container: this.transBgGraphics,
+      target: target,
+      clear: true,
+    });
+
+    this.pixiApp.renderer.background.alpha = oldAlpha;
+
+    // 2. Render Clip Frame with its current transforms
+    // We use a temporary sprite for this to avoid disrupting the main scene's sprites
+    const tempSprite = new Sprite(
+      frame instanceof Texture ? frame : Texture.from(frame)
+    );
+
+    // Apply transforms similar to PixiSpriteRenderer.applySpriteTransforms
+    // Note: textures in transitions are expected to be artboard-sized at the end
+    // so we render this sprite into the RenderTexture (which is artboard-sized).
+    tempSprite.x = clip.center.x;
+    tempSprite.y = clip.center.y;
+    tempSprite.anchor.set(0.5, 0.5);
+
+    const textureWidth = tempSprite.texture.width || 1;
+    const textureHeight = tempSprite.texture.height || 1;
+
+    const baseScaleX =
+      clip.width && clip.width !== 0 ? Math.abs(clip.width) / textureWidth : 1;
+    const baseScaleY =
+      clip.height && clip.height !== 0
+        ? Math.abs(clip.height) / textureHeight
+        : 1;
+
+    if (clip.flip === 'horizontal') {
+      tempSprite.scale.x = -baseScaleX;
+      tempSprite.scale.y = baseScaleY;
+    } else if (clip.flip === 'vertical') {
+      tempSprite.scale.x = baseScaleX;
+      tempSprite.scale.y = -baseScaleY;
+    } else {
+      tempSprite.scale.x = baseScaleX;
+      tempSprite.scale.y = baseScaleY;
+    }
+
+    tempSprite.rotation = (clip.flip == null ? 1 : -1) * clip.angle;
+    tempSprite.alpha = clip.opacity;
+
+    // Render onto target (do not clear, we already cleared with red)
+    this.pixiApp.renderer.render({
+      container: tempSprite,
+      target: target,
+      clear: false,
+    });
+
+    // Clean up temporary texture/sprite
+    if (!(frame instanceof Texture)) {
+      tempSprite.texture.destroy(true);
+    }
+    tempSprite.destroy();
+  }
+
+  removeGlobalEffect(id: string): void {
+    this.globalEffects.delete(id);
+  }
+
+  clearGlobalEffects(): void {
+    this.globalEffects.clear();
+  }
+
+  private updateActiveGlobalEffect(currentTime: number): void {
+    let candidate: ActiveGlobalEffect | null = null;
+
+    // 1. Check for EffectClip instances (Adjustment Layer)
+    // These take precedence and apply to all clips below them (conceptually)
+    // For now, we just pick the first active EffectClip
+    for (const clip of this.clips) {
+      if (
+        clip instanceof EffectClip &&
+        currentTime >= clip.display.from &&
+        (clip.display.to === 0 || currentTime < clip.display.to)
+      ) {
+        candidate = {
+          id: clip.id,
+          key: clip.effect.key,
+          startTime: clip.display.from,
+          duration:
+            clip.duration > 0
+              ? clip.duration
+              : clip.display.to - clip.display.from,
+          trackIndex: this.getTrackIndex(clip.id),
+        };
+        break;
+      }
+    }
+
+    // 2. Fallback to legacy globalEffects map if no EffectClip found
+    if (!candidate) {
+      for (const effect of this.globalEffects.values()) {
+        const endTime = effect.startTime + effect.duration;
+        if (currentTime >= effect.startTime && currentTime < endTime) {
+          candidate = {
+            id: effect.id,
+            key: effect.key,
+            startTime: effect.startTime,
+            duration: effect.duration,
+            trackIndex: -1, // Global effects apply to everything
+          };
+          break;
+        }
+      }
+    }
+
+    this.activeGlobalEffect = candidate;
+  }
+
+  private async applyGlobalEffectIfNeeded(timestamp: number): Promise<void> {
+    // Clear previous effect sprite
+    if (this.currentGlobalEffectSprite) {
+      if (this.currentGlobalEffectSprite.parent) {
+        this.currentGlobalEffectSprite.parent.removeChild(
+          this.currentGlobalEffectSprite
+        );
+      }
+      this.currentGlobalEffectSprite.destroy();
+      this.currentGlobalEffectSprite = null;
+    }
+
+    if (
+      !this.activeGlobalEffect ||
+      !this.pixiApp ||
+      !this.clipContainer ||
+      !this.artboard ||
+      !this.clipsNormalContainer ||
+      !this.clipsEffectContainer
+    )
+      return;
+
+    const { key, startTime, duration } = this.activeGlobalEffect;
+    // ... logic checks ...
+    const elapsed = timestamp - startTime;
+    const progress = Math.min(Math.max(elapsed / duration, 0), 1);
+    if (progress <= 0 || progress >= 1) return;
+    this.clipsEffectContainer.visible = true;
+    let effectFilter = this.effectFilters.get(key);
+
+    if (!effectFilter) {
+      try {
+        effectFilter = makeEffect({
+          name: key.toLowerCase() as any,
+          renderer: this.pixiApp.renderer,
+        });
+        if (effectFilter) {
+          this.effectFilters.set(key, effectFilter);
+        } else {
+          return;
+        }
+      } catch (err) {
+        console.error(err);
+        return;
+      }
+    }
+    const width = this.opts.width;
+    const height = this.opts.height;
+
+    const renderTexture = RenderTexture.create({
+      width: width,
+      height: height,
+    });
+
+    this.pixiApp.renderer.render({
+      container: this.clipsEffectContainer,
+      target: renderTexture,
+      clear: true,
+    });
+    this.clipsEffectContainer.visible = false;
+
+    const resultTexture = effectFilter.render({
+      canvasTexture: renderTexture,
+      progress,
+      width,
+      height,
+    });
+
+    const effectSprite = new Sprite(resultTexture);
+    // Since we add to clipContainer (which matches Artboard/Clip coordinate space),
+    // we should be at 0,0 locally. No need for global Artboard position.
+    // clipContainer is a child of Artboard.
+    effectSprite.x = 0;
+    effectSprite.y = 0;
+    effectSprite.width = width;
+    effectSprite.height = height;
+    // clipContainer inherits Artboard scale? No, clipContainer is child of Artboard.
+    // Artboard is scaled to fit screen. clipContainer is 1:1 inside Artboard.
+    // So scale should simply be 1?
+    // Wait, earlier code set it to this.scale (which is Artboard scale).
+    // If we add to postProcessContainer (global/stage), we need Artboard scale.
+    // If we add to clipContainer, we inherit Artboard scale automatically.
+    // So scale should include resolution or such?
+    // Generally if texture is WxH and we want it to cover WxH in clipContainer, scale 1 is correct.
+    effectSprite.scale.set(1);
+
+    // Set z-index to be between background (lowest) and Normal Clips (highest)
+    // clipContainer has sortableChildren=true
+    effectSprite.zIndex = 5;
+
+    this.clipContainer.addChild(effectSprite);
+    this.currentGlobalEffectSprite = effectSprite;
+
+    renderTexture.destroy(true);
+  }
+
+  /**
+   * Destroy the studio and clean up resources
+   */
+  destroy(): void {
+    if (this.destroyed) return;
+    window.removeEventListener('resize', this.handleResize);
+    this.destroyed = true;
+    this.stop();
+    this.clear();
+    this.transitionRenderers.clear();
+
+    if (this.transFromTexture) {
+      this.transFromTexture.destroy(true);
+      this.transFromTexture = null;
+    }
+    if (this.transToTexture) {
+      this.transToTexture.destroy(true);
+      this.transToTexture = null;
+    }
+    if (this.transBgGraphics) {
+      this.transBgGraphics.destroy(true);
+      this.transBgGraphics = null;
+    }
+    for (const sprite of this.transitionSprites.values()) {
+      sprite.destroy();
+    }
+    this.transitionSprites.clear();
+
+    if (this.pixiApp) {
+      this.pixiApp.destroy(true, {
+        children: true,
+        texture: true,
+      });
+      this.pixiApp = null;
+    }
+  }
+
+  /**
+   * Select a clip and show transform controls
+   * Delegated to InteractionManager
+   */
+  selectClip(clip: IClip, addToSelection: boolean = false): void {
+    this.selection.selectClip(clip, addToSelection);
+  }
+
+  // createTransformer deleted (moved to manager)
+
+  /**
+   * Set the selection to a specific list of clips
+   */
+  public setSelection(clips: IClip[]): void {
+    this.selection.setSelection(clips);
+  }
+
+  /**
+   * Select clips by their IDs
+   */
+  selectClipsByIds(ids: string[]): void {
+    this.selection.selectClipsByIds(ids);
+  }
+
+  /**
+   * Deselect the current clip and hide transform controls
+   */
+  deselectClip(): void {
+    this.selection.deselectClip();
+  }
+
+  /**
+   * Export current studio state to JSON
+   * @param sourceUrlMap Optional map of clips to their source URLs (required for proper serialization)
+   */
+  exportToJSON(): ProjectJSON {
+    return this.timeline.exportToJSON();
+  }
+
+  async loadFromJSON(json: ProjectJSON): Promise<void> {
+    return this.timeline.loadFromJSON(json);
+  }
+
+  // End of class Studio (removed legacy commented out code)
+}
