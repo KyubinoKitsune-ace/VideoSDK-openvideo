@@ -8,7 +8,10 @@ export default function PanelElements() {
   ];
 
   return (
-    <div className="flex flex-col gap-4 p-4 h-full bg-[#111111]">
+    <div className="px-4 h-full">
+      <div className="text-text-primary flex h-12 flex-none items-center text-sm font-medium">
+        Elements
+      </div>
       <div className="grid grid-cols-3 gap-4">
         {shapes.map((shape) => (
           <div key={shape.name} className="flex flex-col gap-2">

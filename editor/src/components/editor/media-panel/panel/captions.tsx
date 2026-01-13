@@ -282,7 +282,10 @@ export default function PanelCaptions() {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 overflow-hidden h-full">
+    <div className="px-4 h-full">
+      <div className="text-text-primary flex h-12 flex-none items-center text-sm font-medium">
+        Captions
+      </div>
       <div className="flex flex-1 flex-col gap-4 px-4 overflow-hidden">
         {mediaItems.length === 0 ? (
           <div className="flex flex-1 items-center justify-center text-center text-sm text-muted-foreground p-8">

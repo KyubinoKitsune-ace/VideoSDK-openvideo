@@ -21,7 +21,10 @@ const PanelEffect = () => {
     }));
   };
   return (
-    <div className="p-4 h-full">
+    <div className="px-4 h-full">
+      <div className="text-text-primary flex h-12 flex-none items-center text-sm font-medium">
+        Effects
+      </div>
       <ScrollArea className="h-full">
         <div
           className="

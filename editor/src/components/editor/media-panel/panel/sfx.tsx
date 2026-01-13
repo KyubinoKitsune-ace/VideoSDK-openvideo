@@ -25,7 +25,10 @@ export default function PanelSFX() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="px-4 h-full">
+      <div className="text-text-primary flex h-12 flex-none items-center text-sm font-medium">
+        Sound effects
+      </div>
       <div className="flex-1 flex flex-col gap-4 p-4 overflow-y-auto">
         {sfx.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[200px] gap-4">

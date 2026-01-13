@@ -3,7 +3,9 @@
 import { TabBar } from './tabbar';
 import { useMediaPanelStore, type Tab } from './store';
 import { Separator } from '@/components/ui/separator';
-import { PanelVisuals } from './panel/visuals';
+import PanelUploads from './panel/uploads';
+import PanelImages from './panel/images';
+import PanelVideos from './panel/videos';
 import PanelEffect from './panel/effects';
 import PanelTransition from './panel/transition';
 import PanelText from './panel/text';
@@ -13,12 +15,14 @@ import PanelVoiceovers from './panel/voiceovers';
 import PanelSFX from './panel/sfx';
 import PanelElements from './panel/elements';
 import { PropertiesPanel } from '../properties-panel';
-import { IClip } from '@designcombo/video';
+import type { IClip } from '@designcombo/video';
 import { useEffect, useState } from 'react';
 import { useStudioStore } from '@/stores/studio-store';
 
 const viewMap: Record<Tab, React.ReactNode> = {
-  visuals: <PanelVisuals />,
+  uploads: <PanelUploads />,
+  images: <PanelImages />,
+  videos: <PanelVideos />,
   music: <PanelMusic />,
   voiceovers: <PanelVoiceovers />,
   sfx: <PanelSFX />,
@@ -58,11 +62,8 @@ export function MediaPanel() {
   }, [studio]);
 
   return (
-    <div className="h-full flex flex-col bg-panel">
-      <div className="flex-none">
-        <TabBar />
-      </div>
-      <Separator orientation="horizontal" />
+    <div className="h-full flex bg-background">
+      <TabBar />
       <div className="flex-1 overflow-hidden" id="panel-content">
         {selectedClips.length > 0 ? (
           <PropertiesPanel selectedClips={selectedClips} />

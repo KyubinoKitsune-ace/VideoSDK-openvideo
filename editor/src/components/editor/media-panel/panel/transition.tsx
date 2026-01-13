@@ -23,9 +23,12 @@ const PanelTransition = () => {
   };
 
   return (
-    <div className="h-full">
+    <div className="px-4 h-full">
+      <div className="text-text-primary flex h-12 flex-none items-center text-sm font-medium">
+        Transitions
+      </div>
       <ScrollArea className="h-full">
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(92px,1fr))] gap-2.5 justify-items-center p-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(92px,1fr))] gap-2.5 justify-items-center">
           {GL_TRANSITION_OPTIONS.map((effect) => {
             const isReady =
               loaded[effect.key]?.static && loaded[effect.key]?.dynamic;

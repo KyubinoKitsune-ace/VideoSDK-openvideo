@@ -128,6 +128,9 @@ export default function PanelText() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      <div className="text-text-primary flex h-12 flex-none items-center px-4 text-sm font-medium">
+        Text
+      </div>
       <div className="px-4 py-2">
         <Button onClick={() => handleAddText()} className="w-full h-9">
           Add Text

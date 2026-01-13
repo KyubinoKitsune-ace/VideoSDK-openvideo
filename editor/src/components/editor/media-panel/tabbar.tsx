@@ -41,8 +41,8 @@ export function TabBar() {
   }, []);
 
   return (
-    <div className="flex items-center justify-center py-1.5 px-4">
-      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hidden">
+    <div className="flex py-1.5 px-3 border-r">
+      <div className="flex items-center flex-col gap-2 overflow-x-auto scrollbar-hidden">
         {(Object.keys(tabs) as Tab[]).map((tabKey) => {
           const tab = tabs[tabKey];
           const isActive = activeTab === tabKey;
