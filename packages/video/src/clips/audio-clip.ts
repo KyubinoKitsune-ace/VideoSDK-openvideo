@@ -1,12 +1,12 @@
-import { Log } from "../utils/log";
+import { Log } from '../utils/log';
 import {
   concatPCMFragments,
   extractPCM4AudioBuffer,
   ringSliceFloat32Array,
-} from "../utils";
-import { BaseClip } from "./base-clip";
-import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from "./iclip";
-import { type AudioClipJSON } from "../json-serialization";
+} from '../utils';
+import { BaseClip } from './base-clip';
+import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from './iclip';
+import type { AudioClipJSON } from '../json-serialization';
 
 interface IAudioClipOpts {
   loop?: boolean;
@@ -29,10 +29,10 @@ interface IAudioClipOpts {
  * }),
  */
 export class AudioClip extends BaseClip implements IPlaybackCapable {
-  readonly type = "Audio";
+  readonly type = 'Audio';
   static ctx: AudioContext | null = null;
 
-  ready: IClip["ready"];
+  ready: IClip['ready'];
 
   private _meta = {
     // microseconds
@@ -104,11 +104,11 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
    * @returns Promise that resolves to an AudioClip instance
    */
   static async fromObject(json: AudioClipJSON): Promise<AudioClip> {
-    if (json.type !== "Audio") {
+    if (json.type !== 'Audio') {
       throw new Error(`Expected Audio, got ${json.type}`);
     }
-    if (!json.src || json.src.trim() === "") {
-      throw new Error("AudioClip requires a valid source URL");
+    if (!json.src || json.src.trim() === '') {
+      throw new Error('AudioClip requires a valid source URL');
     }
 
     // Support both new flat structure and old options structure
@@ -153,7 +153,7 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
   ) {
     super();
     // Always set src, defaulting to empty string if not provided
-    this.src = src !== undefined ? src : "";
+    this.src = src !== undefined ? src : '';
     this.opts = {
       loop: false,
       volume: 1,
@@ -195,7 +195,7 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
         ? await parseStream2PCM(dataSource, AudioClip.ctx)
         : dataSource;
 
-    Log.info("Audio clip decoded complete:", performance.now() - tStart);
+    Log.info('Audio clip decoded complete:', performance.now() - tStart);
 
     this._meta.duration = (pcm[0].length / DEFAULT_AUDIO_CONF.sampleRate) * 1e6;
 
@@ -204,7 +204,7 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
     this.chan1Buf = pcm[1] ?? this.chan0Buf;
 
     Log.info(
-      "Audio clip convert to AudioData, time:",
+      'Audio clip convert to AudioData, time:',
       performance.now() - tStart
     );
   }
@@ -215,7 +215,7 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
    * @param tickRet Data returned by tick
    *
    */
-  tickInterceptor: <T extends Awaited<ReturnType<AudioClip["tick"]>>>(
+  tickInterceptor: <T extends Awaited<ReturnType<AudioClip['tick']>>>(
     time: number,
     tickRet: T
   ) => Promise<T> = async (_, tickRet) => tickRet;
@@ -234,11 +234,11 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
    */
   async tick(time: number): Promise<{
     audio: Float32Array[];
-    state: "success" | "done";
+    state: 'success' | 'done';
   }> {
     if (!this.opts.loop && time >= this._meta.duration) {
       // TODO: if time span is large, return done, theoretically may lose some audio frames
-      return await this.tickInterceptor(time, { audio: [], state: "done" });
+      return await this.tickInterceptor(time, { audio: [], state: 'done' });
     }
 
     const deltaTime = time - this.timestamp;
@@ -251,7 +251,7 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
       );
       return await this.tickInterceptor(time, {
         audio: [new Float32Array(0), new Float32Array(0)],
-        state: "success",
+        state: 'success',
       });
     }
 
@@ -280,7 +280,7 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
 
     this.frameOffset = endIdx;
 
-    return await this.tickInterceptor(time, { audio, state: "success" });
+    return await this.tickInterceptor(time, { audio, state: 'success' });
   }
 
   /**
@@ -318,7 +318,7 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
   destroy(): void {
     this.chan0Buf = new Float32Array(0);
     this.chan1Buf = new Float32Array(0);
-    Log.info("---- audioclip destroy ----");
+    Log.info('---- audioclip destroy ----');
     super.destroy();
   }
 
@@ -326,7 +326,7 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
     const base = super.toJSON(main);
     return {
       ...base,
-      type: "Audio",
+      type: 'Audio',
       loop: this.loop,
       id: this.id,
       volume: this.volume,
@@ -344,36 +344,36 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
   }> {
     await this.ready;
 
-    if (!this.src || this.src.trim() === "") {
-      throw new Error("AudioClip requires a source URL for playback");
+    if (!this.src || this.src.trim() === '') {
+      throw new Error('AudioClip requires a source URL for playback');
     }
 
     // For AudioClip, src is already a URL (from fromUrl or JSON)
-    const objectUrl = this.src.startsWith("blob:") ? this.src : undefined;
-    const audio = document.createElement("audio");
+    const objectUrl = this.src.startsWith('blob:') ? this.src : undefined;
+    const audio = document.createElement('audio');
 
-    audio.crossOrigin = "anonymous";
+    audio.crossOrigin = 'anonymous';
     audio.autoplay = false;
-    audio.preload = "auto";
+    audio.preload = 'auto';
     audio.loop = this.opts.loop || false;
     audio.src = this.src;
 
     // Wait for audio to be ready
     await new Promise<void>((resolve, reject) => {
       const onLoadedData = () => {
-        audio.removeEventListener("loadeddata", onLoadedData);
-        audio.removeEventListener("error", onError);
+        audio.removeEventListener('loadeddata', onLoadedData);
+        audio.removeEventListener('error', onError);
         audio.pause();
         audio.currentTime = 0;
         resolve();
       };
       const onError = () => {
-        audio.removeEventListener("loadeddata", onLoadedData);
-        audio.removeEventListener("error", onError);
-        reject(new Error("Failed to load audio"));
+        audio.removeEventListener('loadeddata', onLoadedData);
+        audio.removeEventListener('error', onError);
+        reject(new Error('Failed to load audio'));
       };
-      audio.addEventListener("loadeddata", onLoadedData, { once: true });
-      audio.addEventListener("error", onError, { once: true });
+      audio.addEventListener('loadeddata', onLoadedData, { once: true });
+      audio.addEventListener('error', onError, { once: true });
       audio.load();
     });
 
@@ -398,7 +398,7 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
         try {
           await audio.play();
         } catch (retryErr) {
-          console.warn("Failed to play audio:", retryErr);
+          console.warn('Failed to play audio:', retryErr);
         }
       }
     }
@@ -425,15 +425,15 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
       }
 
       const onSeeked = () => {
-        audio.removeEventListener("seeked", onSeeked);
+        audio.removeEventListener('seeked', onSeeked);
         resolve();
       };
 
-      audio.addEventListener("seeked", onSeeked, { once: true });
+      audio.addEventListener('seeked', onSeeked, { once: true });
 
       // Timeout after 500ms
       setTimeout(() => {
-        audio.removeEventListener("seeked", onSeeked);
+        audio.removeEventListener('seeked', onSeeked);
         resolve();
       }, 500);
     });
@@ -475,10 +475,10 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
   ): void {
     const audio = element as HTMLAudioElement;
     audio.pause();
-    audio.removeAttribute("src");
+    audio.removeAttribute('src');
     audio.load();
 
-    if (objectUrl && objectUrl.startsWith("blob:")) {
+    if (objectUrl && objectUrl.startsWith('blob:')) {
       URL.revokeObjectURL(objectUrl);
     }
   }
