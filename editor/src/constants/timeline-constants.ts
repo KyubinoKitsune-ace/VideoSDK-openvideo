@@ -40,6 +40,11 @@ export const TRACK_COLORS: Record<
     background: 'bg-pink-500',
     border: '',
   },
+  Placeholder: {
+    solid: 'bg-gray-500',
+    background: 'bg-gray-500',
+    border: '',
+  },
 } as const;
 
 // Utility functions
@@ -62,6 +67,7 @@ export const TRACK_HEIGHTS: Record<TrackType, number> = {
   Audio: 40,
   Caption: 32,
   Transition: 40,
+  Placeholder: 40,
 } as const;
 
 // Utility function for track heights

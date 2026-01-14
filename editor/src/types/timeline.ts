@@ -8,7 +8,8 @@ export type TrackType =
   | 'Text'
   | 'Caption'
   | 'Effect'
-  | 'Transition';
+  | 'Transition'
+  | 'Placeholder';
 
 // Display interface from Studio schema
 export interface IDisplay {
