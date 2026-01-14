@@ -6,7 +6,7 @@ import {
 } from '../utils';
 import { BaseClip } from './base-clip';
 import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from './iclip';
-import { type AudioClipJSON } from '../json-serialization';
+import type { AudioClipJSON } from '../json-serialization';
 
 interface IAudioClipOpts {
   loop?: boolean;
@@ -328,6 +328,7 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
       ...base,
       type: 'Audio',
       loop: this.loop,
+      id: this.id,
       volume: this.volume,
     } as AudioClipJSON;
   }
