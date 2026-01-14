@@ -55,6 +55,7 @@ export interface StudioEvents {
   'track:added': { track: StudioTrack };
   'track:removed': { trackId: string };
   'clip:added': { clip: IClip; trackId: string };
+  'clips:added': { clips: IClip[]; trackId?: string }; // Batch event
   'clip:removed': { clipId: string };
   'clip:updated': { clip: IClip };
   currentTime: { currentTime: number };
@@ -224,6 +225,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     this.on('clip:removed', this.handleClipRemoved);
     this.on('clip:updated', this.handleTimelineChange);
     this.on('clip:added', this.handleTimelineChange);
+    this.on('clips:added', this.handleTimelineChange); // Listen to batch event
     this.on('track:removed', this.handleTimelineChange);
     this.on('track:added', this.handleTimelineChange);
   }
@@ -532,12 +534,12 @@ export class Studio extends EventEmitter<StudioEvents> {
   }
 
   /**
-   * Add a clip to the studio
-   * @param clip The clip to add
-   * @param audioSource Optional audio source (URL, File, or Blob) for AudioClip playback
+   * Add a clip (or clips) to the studio
+   * @param clipOrClips The clip or array of clips to add
+   * @param options Options for addition (trackId, etc.)
    */
   async addClip(
-    clip: IClip,
+    clipOrClips: IClip | IClip[],
     options?:
       | {
           trackId?: string;
@@ -547,7 +549,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       | File
       | Blob
   ): Promise<void> {
-    return this.timeline.addClip(clip, options);
+    return this.timeline.addClip(clipOrClips, options);
   }
 
   /**

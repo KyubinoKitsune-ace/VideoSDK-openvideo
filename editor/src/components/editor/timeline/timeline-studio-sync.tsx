@@ -165,7 +165,62 @@ export const TimelineStudioSync = ({
       usePlaybackStore.getState().setIsPlaying(false);
     };
 
+    const handleClipsAdded = ({
+      clips,
+      trackId,
+    }: {
+      clips: IClip[];
+      trackId?: string;
+    }) => {
+      // Sync duration on clips add
+      if (studio) {
+        usePlaybackStore
+          .getState()
+          .setDuration(studio.getMaxDuration() / 1_000_000);
+      }
+
+      useTimelineStore.setState((state) => {
+        const newClipsMap = { ...state.clips };
+        const clipsToAdd: string[] = [];
+
+        // Update clips map
+        clips.forEach((clip) => {
+          if (!newClipsMap[clip.id]) {
+            newClipsMap[clip.id] = {
+              ...clip,
+              sourceDuration: (clip as any).meta?.duration || clip.duration,
+            };
+            clipsToAdd.push(clip.id);
+          }
+        });
+
+        if (clipsToAdd.length === 0) return state;
+
+        // Update track
+        const updatedTracks = state._tracks.map((t) => {
+          if (t.id === trackId || (t.id === trackId && trackId)) {
+            // Check which clips are not already in track
+            const uniqueNewIds = clipsToAdd.filter(
+              (id) => !t.clipIds.includes(id)
+            );
+            if (uniqueNewIds.length > 0) {
+              return { ...t, clipIds: [...t.clipIds, ...uniqueNewIds] };
+            }
+          }
+          return t;
+        });
+
+        return {
+          ...state,
+          clips: newClipsMap,
+          _tracks: updatedTracks,
+          tracks: updatedTracks,
+        };
+      });
+    };
+
     studio.on('clip:added', handleClipAdded);
+    studio.on('clips:added', handleClipsAdded);
     studio.on('clip:removed', handleClipRemoved);
     studio.on('clip:updated', handleClipUpdated);
     studio.on('track:added', handleTrackAdded as any);
@@ -187,6 +242,7 @@ export const TimelineStudioSync = ({
 
     return () => {
       studio.off('clip:added', handleClipAdded);
+      studio.off('clips:added', handleClipsAdded);
       studio.off('clip:removed', handleClipRemoved);
       studio.off('clip:updated', handleClipUpdated);
       studio.off('track:added', handleTrackAdded);

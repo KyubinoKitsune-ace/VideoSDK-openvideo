@@ -282,10 +282,10 @@ export class TimelineModel {
   }
 
   /**
-   * Add a clip to the studio
+   * Add a clip (or clips) to the studio
    */
   async addClip(
-    clip: IClip,
+    clipOrClips: IClip | IClip[],
     options?:
       | {
           trackId?: string;
@@ -295,7 +295,47 @@ export class TimelineModel {
       | File
       | Blob
   ): Promise<void> {
-    // Normalize options
+    const clips = Array.isArray(clipOrClips) ? clipOrClips : [clipOrClips];
+    if (clips.length === 0) return;
+
+    // 1. Normalize Options
+    const { trackId, audioSource } = this.normalizeAddClipOptions(options);
+
+    // 2. Validate Context
+    if (this.studio.destroyed) return;
+    if (this.studio.pixiApp == null) {
+      throw new Error('Failed to initialize Pixi.js Application');
+    }
+
+    // 3. Prepare Internal Logic (IDs, Tracks, Listeners)
+    const addedClips: IClip[] = [];
+    for (const clip of clips) {
+      await this.prepareClipForTimeline(clip, trackId);
+      addedClips.push(clip);
+    }
+
+    // 4. Update Time Limits
+    await this.recalculateMaxDuration();
+
+    // 5. Setup Visuals & Playback
+    for (const clip of addedClips) {
+      await this.setupClipVisuals(clip, audioSource);
+    }
+
+    // 6. Update Render
+    await this.studio.updateFrame(this.studio.currentTime);
+
+    // 7. Emit Events
+    this.emitAddClipEvents(addedClips, trackId);
+  }
+
+  private normalizeAddClipOptions(
+    options?:
+      | { trackId?: string; audioSource?: string | File | Blob }
+      | string
+      | File
+      | Blob
+  ) {
     let audioSource: string | File | Blob | undefined;
     let trackId: string | undefined;
 
@@ -318,16 +358,13 @@ export class TimelineModel {
       audioSource = opts.audioSource;
       trackId = opts.trackId;
     }
-    if (this.studio.destroyed) return;
+    return { trackId, audioSource };
+  }
 
-    if (this.studio.pixiApp == null) {
-      throw new Error('Failed to initialize Pixi.js Application');
-    }
-
-    // Listen for property changes on the clip
+  private async prepareClipForTimeline(clip: IClip, trackId?: string) {
+    // A. Listen for property changes
     const onPropsChange = async () => {
       await this.studio.updateFrame(this.studio.currentTime);
-      // If transformer is active and for this clip, update bounds
       const interactionManager = this.studio.selection;
       if (
         interactionManager.activeTransformer != null &&
@@ -341,34 +378,40 @@ export class TimelineModel {
     clip.on('propsChange', onPropsChange);
     this.studio.clipListeners.set(clip, onPropsChange);
 
-    // Provide Studio's renderer to all clips that support it
+    // B. Link Renderer
     if (this.studio.pixiApp != null && typeof clip.setRenderer === 'function') {
       clip.setRenderer(this.studio.pixiApp.renderer);
     }
 
-    // Wait for clip to be ready
-    const meta = await clip.ready;
+    // C. Wait for Ready
+    await clip.ready;
 
-    // Ensure clip has an ID
+    // D. Ensure ID
     if (!clip.id) {
       (clip as any).id = `clip_${Date.now()}_${Math.random()
         .toString(36)
         .substr(2, 9)}`;
     }
 
-    // Add to flat clips list if not already there
+    // E. Add to internal list
     if (!this.clips.includes(clip)) {
       this.clips.push(clip);
     }
 
-    // Add to track (by ID)
+    // F. Add to Track
+    this.addClipToTrack(clip, trackId);
+  }
+
+  private addClipToTrack(clip: IClip, trackId?: string) {
     if (trackId) {
+      // Try to find existing track (could be newly added in same batch)
       const track = this.tracks.find((t) => t.id === trackId);
       if (track) {
         if (!track.clipIds.includes(clip.id)) {
           track.clipIds.push(clip.id);
         }
       } else {
+        // Track ID provided but doesn't exist -> Create it
         this.tracks.unshift({
           id: trackId,
           name: `Track ${this.tracks.length + 1}`,
@@ -377,7 +420,7 @@ export class TimelineModel {
         });
       }
     } else {
-      // Create new track for this clip (default behavior)
+      // Auto-create new track
       const newTrackId = `track_${Date.now()}_${Math.random()
         .toString(36)
         .substr(2, 9)}`;
@@ -388,62 +431,60 @@ export class TimelineModel {
         clipIds: [clip.id],
       });
     }
+  }
 
-    // Update max duration
-    const clipDuration = clip.duration > 0 ? clip.duration : meta.duration;
+  private async setupClipVisuals(
+    clip: IClip,
+    audioSource?: string | File | Blob
+  ) {
+    const meta = await clip.ready;
 
-    // If this clip has Infinity duration, recalculate maxDuration from all clips
-    if (clipDuration === Infinity || isNaN(clipDuration)) {
-      await this.recalculateMaxDuration();
-    } else {
-      const clipEndTime = clip.display.from + clipDuration;
-      if (clipEndTime > 0) {
-        this.studio.maxDuration = Math.max(
-          this.studio.maxDuration,
-          clipEndTime
-        );
-      }
-    }
-
-    // Setup playback for clips that support it
+    // Playback
     await this.setupPlaybackForClip(clip, audioSource);
 
-    // Create renderer for clips with video
+    // Renderer (Video/Image)
     if (meta.width > 0 && meta.height > 0) {
-      if (clip instanceof VideoClip) {
-        if (clip.tickInterceptor != null) {
-          const renderer = new PixiSpriteRenderer(
-            this.studio.pixiApp!,
-            clip,
-            this.studio.clipsNormalContainer!
-          );
-          this.studio.spriteRenderers.set(clip, renderer);
-        }
-      } else {
+      const container = this.studio.clipsNormalContainer!;
+      // Simple logic as both branches did the same thing in previous code
+      if (
+        !(clip instanceof VideoClip) ||
+        (clip instanceof VideoClip && clip.tickInterceptor != null)
+      ) {
         const renderer = new PixiSpriteRenderer(
           this.studio.pixiApp!,
           clip,
-          this.studio.clipsNormalContainer!
+          container
         );
         this.studio.spriteRenderers.set(clip, renderer);
       }
     }
 
-    // Update frame
-    await this.studio.updateFrame(this.studio.currentTime);
-
-    // Make sprite interactive
+    // Interactivity
     if (this.studio.opts.interactivity) {
       this.studio.selection.setupSpriteInteractivity(clip);
     }
+  }
 
-    this.studio.emit('clip:added', {
-      clip,
-      trackId:
+  private emitAddClipEvents(addedClips: IClip[], trackId?: string) {
+    if (addedClips.length === 0) return;
+
+    if (addedClips.length === 1) {
+      const clip = addedClips[0];
+      const actualTrackId =
         trackId ||
         this.tracks.find((t) => t.clipIds.includes(clip.id))?.id ||
-        '',
-    });
+        '';
+
+      this.studio.emit('clip:added', {
+        clip,
+        trackId: actualTrackId,
+      });
+    } else {
+      this.studio.emit('clips:added', {
+        clips: addedClips,
+        trackId,
+      });
+    }
   }
 
   async removeClip(clip: IClip): Promise<void> {

@@ -158,6 +158,8 @@ export default function PanelCaptions() {
 
       // 4. Add to studio
       const captionTrackId = `track_captions_${Date.now()}`;
+      const clipsToAdd: IClip[] = [];
+
       for (const json of captionClipsJSON) {
         // Tag captions with sourceClipId for filtering and attach paragraphs
         const enrichedJson = {
@@ -175,7 +177,11 @@ export default function PanelCaptions() {
           },
         };
         const clip = await jsonToClip(enrichedJson);
-        await studio.addClip(clip, { trackId: captionTrackId });
+        clipsToAdd.push(clip);
+      }
+
+      if (clipsToAdd.length > 0) {
+        await studio.addClip(clipsToAdd, { trackId: captionTrackId });
       }
     } catch (error) {
       Log.error('Failed to generate captions:', error);
