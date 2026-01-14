@@ -26,7 +26,6 @@ export interface ITransitionInfo {
  *
  * Clips are abstractions of different data types, providing data to other modules
  *
- * WebAV provides built-in {@link VideoClip}, {@link AudioClip}, {@link ImageClip} and other common clips for providing data to {@link Compositor} and {@link AVCanvas}
  *
  * You only need to implement this interface to create custom clips, giving you maximum flexibility to generate video content such as animations and transition effects
  *

@@ -28,7 +28,6 @@ type AnimateImgType = 'avif' | 'webp' | 'png' | 'gif';
  *   )
  * )
  *
- * @see [Video composition](https://webav-tech.github.io/WebAV/demo/2_1-concat-video)
  */
 export class ImageClip extends BaseClip implements IClip {
   readonly type = 'Image';

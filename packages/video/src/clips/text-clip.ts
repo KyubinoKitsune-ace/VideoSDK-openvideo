@@ -346,9 +346,7 @@ export class TextClip extends BaseClip {
     this.text = text;
     // Store external renderer if provided (e.g., from Studio)
     this.externalRenderer = renderer ?? null;
-    console.log('[TextClip] Constructor:', {
-      opts,
-    });
+
     // Create PixiJS TextStyle from options
     // Build style object conditionally to avoid passing undefined values
     const styleOptions = this.createStyleFromOpts(opts);
@@ -376,7 +374,6 @@ export class TextClip extends BaseClip {
    */
   setRenderer(renderer: Application['renderer']): void {
     this.externalRenderer = renderer;
-    console.log('SET RENDERER', renderer);
   }
 
   /**

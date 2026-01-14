@@ -60,7 +60,6 @@ export const TimelineStudioSync = ({
       // Let's handle clip:added by manually updating store state fully.
 
       useTimelineStore.setState((state) => {
-        console.log('updateClipAdded', clip);
         const updatedClips = {
           ...state.clips,
           [clip.id]: {
@@ -69,7 +68,6 @@ export const TimelineStudioSync = ({
           },
         };
 
-        console.log('updatedClips', updatedClips);
         const updatedTracks = state._tracks.map((t) => {
           if (t.id === trackId && !t.clipIds.includes(clip.id)) {
             return { ...t, clipIds: [...t.clipIds, clip.id] };
@@ -128,13 +126,6 @@ export const TimelineStudioSync = ({
     };
 
     const handleClipUpdated = ({ clip }: { clip: IClip }) => {
-      console.log('[TimelineSync] Clip updated event:', {
-        clipId: clip.id,
-        display: clip.display,
-        duration: clip.duration,
-        trim: clip.trim,
-      });
-
       // Sync duration on clip update
       usePlaybackStore
         .getState()
@@ -152,11 +143,6 @@ export const TimelineStudioSync = ({
             trim: clip.trim ? { ...clip.trim } : undefined,
           },
         };
-
-        console.log(
-          '[TimelineSync] Updated clips in store:',
-          updatedClips[clip.id]
-        );
 
         return {
           ...state,
@@ -304,7 +290,6 @@ export const TimelineStudioSync = ({
           if (clip.trim !== undefined) {
             updates.trim = clip.trim;
           }
-          console.log('updates', clip, updates);
           await studio.updateClip(clip.clipId, updates);
         })
       );
@@ -323,9 +308,6 @@ export const TimelineStudioSync = ({
       clipId: string;
       trackId: string;
     }) => {
-      // Handle clip moved to existing track
-      console.log('Clip moved to track:', clipId, trackId);
-
       // Update the store to move the clip to the target track
       useTimelineStore.setState((state) => {
         // Remove clip from all tracks
@@ -367,9 +349,6 @@ export const TimelineStudioSync = ({
       clipId: string;
       targetIndex: number;
     }) => {
-      // Handle clip moved to a completely new track at a specific index
-      console.log('Clip moved to new track:', clipId, targetIndex);
-
       const clip = useTimelineStore.getState().clips[clipId];
       if (!clip) return;
 
@@ -463,7 +442,6 @@ export const TimelineStudioSync = ({
       fromClipId: string;
       toClipId: string;
     }) => {
-      console.log('handleTransitionAdd', fromClipId, toClipId);
       if (!studio) return;
       await studio.addTransition('GridFlip', 2_000_000, fromClipId, toClipId);
     };

@@ -155,7 +155,6 @@ export default function PanelCaptions() {
         videoHeight: (studio as any).opts.height,
         words,
       });
-      console.log(captionClipsJSON);
 
       // 4. Add to studio
       const captionTrackId = `track_captions_${Date.now()}`;

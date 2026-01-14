@@ -268,7 +268,6 @@ export abstract class BaseSprite extends EventEmitter<BaseSpriteEvents> {
    *   { duration: 4e6, iterCount: 1 },
    * );
    *
-   * @see [Video watermark animation](https://webav-tech.github.io/WebAV/demo/2_1-concat-video)
    */
   setAnimation(keyFrame: TKeyFrameOpts, opts: IAnimationOpts): void {
     this.animatKeyFrame = Object.entries(keyFrame).map(([k, val]) => {

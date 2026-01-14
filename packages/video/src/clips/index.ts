@@ -1,4 +1,4 @@
-// 避免使用 DOM API 确保这些 Clip 能在 Worker 中运行
+// Avoid using DOM API to ensure these Clips can run in Worker
 
 export * from './audio-clip';
 export * from './caption-clip';

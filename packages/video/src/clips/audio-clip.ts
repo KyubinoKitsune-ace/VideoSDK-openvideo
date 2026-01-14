@@ -214,7 +214,6 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
    * @param time Time when tick was called
    * @param tickRet Data returned by tick
    *
-   * @see [Remove video green screen background](https://webav-tech.github.io/WebAV/demo/3_2-chromakey-video)
    */
   tickInterceptor: <T extends Awaited<ReturnType<AudioClip['tick']>>>(
     time: number,
@@ -393,7 +392,7 @@ export class AudioClip extends BaseClip implements IPlaybackCapable {
     if (audio.paused) {
       try {
         await audio.play();
-      } catch (err) {
+      } catch (_err) {
         // Retry once on failure
         try {
           await audio.play();

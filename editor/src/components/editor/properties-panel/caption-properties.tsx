@@ -34,6 +34,10 @@ import color from 'color';
 import { fontManager } from '@designcombo/video';
 import { getGroupedFonts, getFontByPostScriptName } from '@/utils/font-utils';
 
+import useLayoutStore from '../store/use-layout-store';
+import { Button } from '@/components/ui/button';
+import { ChevronDown } from 'lucide-react';
+
 const GROUPED_FONTS = getGroupedFonts();
 
 interface CaptionPropertiesProps {
@@ -50,6 +54,8 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
     background: '',
     keyword: '#ffffff',
   };
+
+  const { setFloatingControl } = useLayoutStore();
 
   const handleUpdate = (updates: any) => {
     // Directly update caption properties
@@ -342,6 +348,25 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
               <span className="text-[10px] text-muted-foreground">%</span>
             </InputGroupAddon>
           </InputGroup>
+        </div>
+      </div>
+
+      {/* Caption presets */}
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Presets
+        </label>
+        <div className="relative w-full">
+          <Button
+            className="flex w-full items-center justify-between text-sm border bg-input/30 h-9"
+            variant="secondary"
+            onClick={() => setFloatingControl('caption-preset-picker')}
+          >
+            <div className="w-full text-left">
+              <p className="truncate">None</p>
+            </div>
+            <ChevronDown className="text-muted-foreground" size={14} />
+          </Button>
         </div>
       </div>
 

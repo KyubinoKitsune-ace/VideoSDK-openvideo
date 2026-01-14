@@ -67,9 +67,6 @@ async function waitEncoderQueue(getQSize: () => number) {
 
 /**
  * Video compositor that can add multiple {@link OffscreenSprite} instances,
- * compositing them based on position, z-index, time offset, etc., into an output video file
- * @see [Video Composition](https://webav-tech.github.io/WebAV/demo/2_1-concat-video)
- * @see [Video Audio Mixing](https://webav-tech.github.io/WebAV/demo/2_2-video-add-audio)
  * @example
  * const spr1 = new OffscreenSprite(
  *   new VideoClip((await fetch('<mp4 url>')).body),
@@ -184,7 +181,6 @@ export class Compositor extends EventEmitter<{
   public async initPixiApp(): Promise<void> {
     const { width, height } = this.opts;
     this.pixiApp = new Application();
-    console.log('PIXI APP 000', this.pixiApp);
     await this.pixiApp.init({
       canvas: this.canvas as any,
       width,
@@ -237,7 +233,6 @@ export class Compositor extends EventEmitter<{
 
     const cloned = await clip.clone();
 
-    console.log('PIXI APP 111', this.pixiApp);
     // Provide renderer to cloned clip if Pixi App is ready
     if (
       this.pixiApp != null &&
@@ -613,9 +608,6 @@ export class Compositor extends EventEmitter<{
         const targetClipId = clipJSON.toClipId;
         const clip = this.sprites.find((c) => c.id === targetClipId);
         if (clip) {
-          console.log(
-            `[Compositor] Applying transition ${clipJSON.transitionEffect.key} to clip ${targetClipId}`
-          );
           clip.transition = {
             name: clipJSON.transitionEffect.key,
             duration: clipJSON.duration,

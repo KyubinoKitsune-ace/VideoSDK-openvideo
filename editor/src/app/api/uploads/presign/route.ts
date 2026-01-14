@@ -21,8 +21,6 @@ export async function POST(request: NextRequest) {
     const body: PresignRequest = await request.json();
     const { userId = 'mockuser', fileNames } = body;
 
-    console.log(config.r2);
-
     if (!fileNames || !Array.isArray(fileNames) || fileNames.length === 0) {
       return NextResponse.json(
         { error: 'fileNames array is required and must not be empty' },
