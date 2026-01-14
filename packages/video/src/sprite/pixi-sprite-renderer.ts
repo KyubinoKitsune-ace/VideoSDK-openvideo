@@ -80,6 +80,14 @@ export class PixiSpriteRenderer {
       throw new Error('Failed to create 2d context for PixiSpriteRenderer');
     }
     this.context = ctx;
+
+    // Initialize Root Container immediately
+    this.root = new Container();
+    this.root.visible = false; // Hidden until first frame
+    // If we have a target container, add root to it
+    if (this.targetContainer) {
+      this.targetContainer.addChild(this.root);
+    }
   }
 
   /**
@@ -114,9 +122,8 @@ export class PixiSpriteRenderer {
       if (this.pixiSprite == null) {
         this.pixiSprite = new Sprite(frame);
         this.pixiSprite.label = 'MainSprite';
-        this.root = new Container();
-        this.root.addChild(this.pixiSprite);
-        this.targetContainer?.addChild(this.root);
+        // this.root is already created in constructor
+        this.root!.addChild(this.pixiSprite);
         this.applySpriteTransforms();
       } else {
         this.pixiSprite.texture = frame;
@@ -168,9 +175,7 @@ export class PixiSpriteRenderer {
       if (this.pixiSprite == null) {
         this.pixiSprite = new Sprite(this.texture);
         this.pixiSprite.label = 'MainSprite';
-        this.root = new Container();
-        this.root.addChild(this.pixiSprite);
-        this.targetContainer?.addChild(this.root);
+        this.root!.addChild(this.pixiSprite);
         this.applySpriteTransforms();
       } else {
         this.pixiSprite.texture = this.texture;

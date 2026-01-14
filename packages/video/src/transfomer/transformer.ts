@@ -80,9 +80,14 @@ export class Transformer extends Container {
       ...Object.values(this.#handles)
     );
     this.#bindEvents();
+
+    // Hide initially to prevent FOUC (Flash of Unpositioned Content)
+    this.visible = false;
+
     Ticker.shared.addOnce(() => {
       if (!this.destroyed && this.parent) {
         this.#initBounds();
+        this.visible = true;
       }
     });
   }
