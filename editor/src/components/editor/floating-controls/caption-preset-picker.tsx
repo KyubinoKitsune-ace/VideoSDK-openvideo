@@ -1,14 +1,13 @@
-"use client";
-import React, { useEffect, useRef } from "react";
-import { CircleOff, XIcon } from "lucide-react";
-import useLayoutStore from "../store/use-layout-store";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ICaptionsControlProps } from "../interface/captions";
-import { STYLE_CAPTION_PRESETS, NONE_PRESET } from "../constant/caption";
+'use client';
+import React, { useEffect, useRef } from 'react';
+import { CircleOff, XIcon } from 'lucide-react';
+import useLayoutStore from '../store/use-layout-store';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ICaptionsControlProps } from '../interface/captions';
+import { STYLE_CAPTION_PRESETS, NONE_PRESET } from '../constant/caption';
 
-import { useStudioStore } from "@/stores/studio-store";
-import { fontManager } from "@designcombo/video";
+import { useStudioStore } from '@/stores/studio-store';
+import { fontManager } from '@designcombo/video';
 
 const CaptionPresetPicker = () => {
   const { setFloatingControl } = useLayoutStore();
@@ -21,13 +20,13 @@ const CaptionPresetPicker = () => {
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
       ) {
-        setFloatingControl("");
+        setFloatingControl('');
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [setFloatingControl]);
 
@@ -35,7 +34,7 @@ const CaptionPresetPicker = () => {
     if (!studio) return;
 
     // Filter for CaptionClips
-    const captionClips = selectedClips.filter((c) => c.type === "Caption");
+    const captionClips = selectedClips.filter((c) => c.type === 'Caption');
     if (captionClips.length === 0) return;
 
     // Load fonts if needed
@@ -62,14 +61,14 @@ const CaptionPresetPicker = () => {
           active: preset.activeColor,
           activeFill: preset.activeFillColor,
           background: preset.backgroundColor,
-          keyword: preset.isKeywordColor ?? "transparent",
+          keyword: preset.isKeywordColor ?? 'transparent',
         },
         preserveKeywordColor: preset.preservedColorKeyWord ?? false,
       },
-      animation: preset.animation || "undefined",
-      textCase: preset.textTransform || "normal",
+      animation: preset.animation || 'undefined',
+      textCase: preset.textTransform || 'normal',
       dropShadow: {
-        color: preset.boxShadow?.color ?? "transparent",
+        color: preset.boxShadow?.color ?? 'transparent',
         alpha: 0.5,
         blur: preset.boxShadow?.blur ?? 4,
         distance: Math.sqrt(x * x + y * y) ?? 4,
@@ -85,7 +84,7 @@ const CaptionPresetPicker = () => {
       }
     }
 
-    const allCaptionClips = studio.clips.filter((c) => c.type === "Caption");
+    const allCaptionClips = studio.clips.filter((c) => c.type === 'Caption');
     const targetClips = allCaptionClips.filter(
       (c) => captionClips.includes(c) || mediaIds.has((c as any).mediaId)
     );
@@ -95,16 +94,8 @@ const CaptionPresetPicker = () => {
     }
   };
 
-  // Separate presets by type
-  const wordPresets = STYLE_CAPTION_PRESETS.filter(
-    (preset) => preset.type === "word"
-  );
-  const linePresets = STYLE_CAPTION_PRESETS.filter(
-    (preset) => preset.type !== "word"
-  );
-
   const PresetGrid = ({ presets }: { presets: ICaptionsControlProps[] }) => (
-    <div className="grid gap-4 p-4">
+    <div className="grid gap-2 p-4">
       <div
         className="flex h-[70px] cursor-pointer items-center justify-center bg-zinc-800"
         onClick={() => {
@@ -135,30 +126,17 @@ const CaptionPresetPicker = () => {
   return (
     <div
       ref={containerRef}
-      className="absolute left-full top-0 z-200 ml-2 w-64 border bg-background p-0"
+      className="absolute left-full top-0 z-200 ml-2 w-72 border bg-background p-0"
     >
-      <div className="handle flex  items-center justify-between px-4 py-3">
+      <div className="handle flex  items-center justify-between px-4 py-3 pb-0">
         <p className="text-sm font-bold">Presets</p>
-        <div className="h-4 w-4" onClick={() => setFloatingControl("")}>
+        <div className="h-4 w-4" onClick={() => setFloatingControl('')}>
           <XIcon className="h-3 w-3 cursor-pointer font-extrabold text-muted-foreground" />
         </div>
       </div>
-      <Tabs defaultValue="words" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="words">Words</TabsTrigger>
-          <TabsTrigger value="lines">Lines</TabsTrigger>
-        </TabsList>
-
-        <ScrollArea className="h-[400px] w-full">
-          <TabsContent value="words" className="mt-0">
-            <PresetGrid presets={wordPresets} />
-          </TabsContent>
-
-          <TabsContent value="lines" className="mt-0">
-            <PresetGrid presets={linePresets} />
-          </TabsContent>
-        </ScrollArea>
-      </Tabs>
+      <ScrollArea className="h-[500px] w-full">
+        <PresetGrid presets={STYLE_CAPTION_PRESETS} />
+      </ScrollArea>
     </div>
   );
 };

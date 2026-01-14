@@ -19,7 +19,7 @@ function isOTFile(obj: any): obj is OPFSToolFile {
   return obj.kind === 'file' && obj.createReader instanceof Function;
 }
 
-// 用于内部创建 VideoClip 实例
+// Internally used for creating VideoClip instances
 type MPClipCloneArgs = Awaited<ReturnType<typeof mp4FileToSamples>> & {
   localFile: OPFSToolFile;
 };
@@ -32,7 +32,7 @@ interface MP4DecoderConf {
 export interface IMP4ClipOpts {
   audio?: boolean | { volume: number };
   /**
-   * 不安全，随时可能废弃
+   * Unsafe, may be deprecated at any time
    */
   __unsafe_hardwareAcceleration__?: HardwarePreference;
 }
@@ -67,15 +67,6 @@ type LocalFileReader = Awaited<ReturnType<OPFSToolFile['createReader']>>;
  *   },
  * });
  *
- * @example
- * // Direct constructor (for advanced use)
- * new VideoClip((await fetch('<mp4 url>')).body)
- * new VideoClip(mp4File.stream())
- *
- * @see {@link Compositor}
- * @see [AVCanvas](../../av-canvas/classes/AVCanvas.html)
- *
- * @see [Decode and play video](https://webav-tech.github.io/WebAV/demo/1_1-decode-video)
  */
 export class VideoClip extends BaseClip implements IPlaybackCapable {
   readonly type = 'Video';
@@ -336,8 +327,7 @@ export class VideoClip extends BaseClip implements IPlaybackCapable {
    * @param time Time when tick was called
    * @param tickRet Data returned by tick
    *
-   * @see [Remove video green screen background](https://webav-tech.github.io/WebAV/demo/3_2-chromakey-video)
-   */
+   *    */
   tickInterceptor: <T extends Awaited<ReturnType<VideoClip['tick']>>>(
     time: number,
     tickRet: T
@@ -858,7 +848,7 @@ function genMeta(
   if (decoderConf.video != null && videoSamples.length > 0) {
     meta.width = decoderConf.video.codedWidth ?? 0;
     meta.height = decoderConf.video.codedHeight ?? 0;
-    // 90, 270 度，需要交换宽高
+    // 90, 270 degrees, need to swap width and height
     const normalizedRotation = (Math.round(rotationDeg / 90) * 90 + 360) % 360;
     if (normalizedRotation === 90 || normalizedRotation === 270) {
       [meta.width, meta.height] = [meta.height, meta.width];
@@ -1003,7 +993,7 @@ async function mp4FileToSamples(otFile: OPFSToolFile, opts: IMP4ClipOpts = {}) {
   } else if (lastSampele == null) {
     throw Error('VideoClip stream not contain any sample');
   }
-  // 修复首帧黑帧
+  // Fix first black frame
   fixFirstBlackFrame(videoSamples);
   Log.info('mp4 stream parsed');
   return {
@@ -1020,9 +1010,9 @@ function normalizeTimescale(
   delta = 0,
   sampleType: 'video' | 'audio'
 ) {
-  // todo: perf 丢弃多余字段，小尺寸对象性能更好
+  // todo: perf discard redundant fields, small objects perform better
   let offset = s.offset;
-  // 当 IDR 帧前面包含非图像帧数据（如 SEI），可能导致解码失败
+  // When IDR frame contains non-image data (like SEI) before it, decoding may fail
   const idrOffset =
     sampleType === 'video' && s.is_sync
       ? idrNALUOffset(s.data, s.description.type)
@@ -1030,7 +1020,7 @@ function normalizeTimescale(
 
   let size = s.size;
   if (idrOffset > 0) {
-    // 此处通过控制 offset、size 字段 跳过非图像帧数据
+    // Skip non-image data by controlling offset and size fields
     offset += idrOffset;
     size -= idrOffset;
   }
@@ -1044,7 +1034,7 @@ function normalizeTimescale(
     dts: ((s.dts - delta) / s.timescale) * 1e6,
     duration: (s.duration / s.timescale) * 1e6,
     timescale: 1e6,
-    // 音频数据量可控，直接保存在内存中
+    // Audio data volume is controllable, save directly in memory
     data: sampleType === 'video' ? null : s.data,
   };
 }
@@ -1499,7 +1489,7 @@ function createAudioChunksDecoder(
         for (let i = 0; i < pcm.length; i++) pcm[i] *= opts.volume;
     }
 
-    // 补齐双声道
+    // Ensure stereo
     if (pcmArr.length === 1) pcmArr = [pcmArr[0], pcmArr[0]];
 
     outputCb(pcmArr);
@@ -1568,7 +1558,7 @@ function createAudioChunksDecoder(
   };
 }
 
-// 并行执行任务，但按顺序emit结果
+// Parallel execution, but emit results in order
 function createPromiseQueue<T extends any>(onResult: (data: T) => void) {
   const rsCache: T[] = [];
   let waitingIdx = 0;
@@ -1601,7 +1591,7 @@ function emitAudioFrames(
   pcmData: { frameCnt: number; data: [Float32Array, Float32Array][] },
   emitCnt: number
 ) {
-  // todo: perf 重复利用内存空间
+  // todo: perf reuse memory space
   const audio = [new Float32Array(emitCnt), new Float32Array(emitCnt)];
   let offset = 0;
   let i = 0;
@@ -1636,7 +1626,7 @@ async function videosamples2Chunks(
 
   const rangSize = last.offset + last.size - first.offset;
   if (rangSize < 30e6) {
-    // 单次读取数据小于 30M，就一次性读取数据，降低 IO 频次
+    // Single read data < 30M, read all at once to reduce IO frequency
     const data = new Uint8Array(
       await reader.read(rangSize, { at: first.offset })
     );
@@ -1730,7 +1720,7 @@ function splitAudioSampleByTime(audioSamples: ExtMP4Sample[], time: number) {
   return [preSlice, postSlice];
 }
 
-// 兼容解码错误
+// Support decoding errors
 function decodeGoP(
   dec: VideoDecoder,
   chunks: EncodedVideoChunk[],
@@ -1741,8 +1731,8 @@ function decodeGoP(
   if (dec.state !== 'configured') return;
   for (let i = 0; i < chunks.length; i++) dec.decode(chunks[i]);
 
-  // todo：flush 之后下一帧必须是 IDR 帧，是否可以根据情况再决定调用 flush？
-  // windows 某些设备 flush 可能不会被 resolved，所以不能 await flush
+  // todo: The next frame after flush must be an IDR frame. Decide whether to call flush based on context?
+  // flush may not be resolved on some Windows devices, so do not await flush
   dec.flush().catch((err) => {
     if (!(err instanceof Error)) throw err;
     if (
@@ -1752,7 +1742,7 @@ function decodeGoP(
       opts.onDecodingError(err);
       return;
     }
-    // reset 中断解码器，预期会抛出 AbortedError
+    // reset interrupts the decoder, expected to throw AbortedError
     if (!err.message.includes('Aborted due to close')) {
       throw err;
     }
@@ -1769,11 +1759,11 @@ function idrNALUOffset(
   for (let i = 0; i < u8Arr.byteLength - 4; ) {
     if (type === 'avc1') {
       const nalUnitType = dv.getUint8(i + 4) & 0x1f;
-      // 5: IDR 帧, 7: SPS, 8: PPS
+      // 5: IDR frame, 7: SPS, 8: PPS
       if (nalUnitType === 5 || nalUnitType === 7 || nalUnitType === 8) return i;
     } else if (type === 'hvc1') {
       const nalUnitType = (dv.getUint8(i + 4) >> 1) & 0x3f;
-      // 19-20: IDR 帧, 32-34: VPS SPS PPS
+      // 19-20: IDR frame, 32-34: VPS SPS PPS
       if (
         nalUnitType === 19 ||
         nalUnitType === 20 ||
@@ -1783,20 +1773,20 @@ function idrNALUOffset(
       )
         return i;
     }
-    // 跳至下一个 NALU 继续检查
+    // Jump to next NALU to continue checking
     i += dv.getUint32(i) + 4;
   }
   return -1;
 }
 
-// 如果第一帧出现的时间偏移较大，会导致第一帧为黑帧，这里尝试自动消除第一帧前的黑帧
+// Large time offset for the first frame may lead to a black frame. Attempt to eliminate it automatically.
 function fixFirstBlackFrame(samples: ExtMP4Sample[]) {
   let iframeCnt = 0;
   let minCtsSample: ExtMP4Sample | null = null;
-  // cts 最小表示视频的第一帧
+  // cts minimum represents the first frame of the video
   for (const s of samples) {
     if (s.deleted) continue;
-    // 最多检测两个 I 帧之间的帧
+    // Detect frames between up to two I-frames
     if (s.is_sync) iframeCnt += 1;
     if (iframeCnt >= 2) break;
 
@@ -1804,7 +1794,7 @@ function fixFirstBlackFrame(samples: ExtMP4Sample[]) {
       minCtsSample = s;
     }
   }
-  // 200ms 是经验值，自动消除 200ms 内的黑帧，超过则不处理
+  // 200ms is an empirical value; automatically eliminate black frames within 200ms, otherwise do not process
   if (minCtsSample != null && minCtsSample.cts < 200e3) {
     minCtsSample.duration += minCtsSample.cts;
     minCtsSample.cts = 0;

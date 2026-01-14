@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 interface LayoutStore {
   floatingControl: string;
@@ -6,7 +6,7 @@ interface LayoutStore {
 }
 
 const useLayoutStore = create<LayoutStore>((set) => ({
-  floatingControl: "",
+  floatingControl: '',
   setFloatingControl: (control: string) => set({ floatingControl: control }),
 }));
 

@@ -143,7 +143,6 @@ export class TimelineModel {
     toClipId?: string | null
   ): Promise<void> {
     if (this.studio.destroyed) return;
-    console.log('transitionKey', transitionKey);
 
     let clipA: IClip | null = null;
     let clipB: IClip | null = null;
@@ -969,14 +968,6 @@ export class TimelineModel {
 
     const clip = selected[0];
 
-    console.log('[Studio] Trimming clip:', {
-      clipId: clip.id,
-      currentDisplay: clip.display,
-      currentDuration: clip.duration,
-      currentTrim: clip.trim,
-      trimFromSeconds,
-    });
-
     // Convert seconds to microseconds
     const trimFromUs = trimFromSeconds * 1_000_000;
 
@@ -1018,15 +1009,7 @@ export class TimelineModel {
       };
     }
 
-    console.log('[Studio] Trim updates:', updates);
-
     await this.updateClip(clip.id, updates);
-
-    console.log('[Studio] Clip after trim:', {
-      display: clip.display,
-      duration: clip.duration,
-      trim: clip.trim,
-    });
   }
 
   async updateSelected(updates: Partial<IClip>): Promise<void> {

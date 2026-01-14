@@ -287,10 +287,7 @@ export class Transformer extends Container {
     this.#initBounds(); // Refresh pivot/bounds state
     this.isDragging = true;
     this.activeHandle = handle;
-    console.log(
-      '[Transformer] #beginHandleDrag called, activeHandle:',
-      this.activeHandle
-    );
+
     this.#childStart.clear();
 
     for (const c of this.group)
@@ -303,7 +300,6 @@ export class Transformer extends Container {
   }
 
   #updateDrag(handle: HandleKind, pos: Point) {
-    // console.log('[Transformer] #updateDrag called, activeHandle:', this.activeHandle);
     this.#scale(handle, pos);
   }
 
@@ -376,10 +372,6 @@ export class Transformer extends Container {
   }
 
   #endDrag() {
-    console.log(
-      '[Transformer] #endDrag called, activeHandle:',
-      this.activeHandle
-    );
     this.isDragging = false;
     this.#angle = this.rotation;
     this.activeHandle = null;

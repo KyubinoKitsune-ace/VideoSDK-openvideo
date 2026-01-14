@@ -14,7 +14,7 @@ export function PropertiesPanel({ selectedClips }: { selectedClips: IClip[] }) {
     if (selectedClips.length !== 1) return;
 
     const clip = selectedClips[0];
-    console.log('clip', clip);
+
     const onPropsChange = () => {
       setTick((t) => t + 1);
     };

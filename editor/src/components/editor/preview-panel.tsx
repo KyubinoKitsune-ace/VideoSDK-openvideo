@@ -57,7 +57,6 @@ export function PreviewPanel({ onReady }: PreviewPanelProps) {
         ]),
         previewRef.current?.ready,
       ]);
-      console.log('Studio ready');
       onReady?.();
     };
 

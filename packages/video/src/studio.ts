@@ -295,14 +295,6 @@ export class Studio extends EventEmitter<StudioEvents> {
     canvas.width = this.opts.width;
     canvas.height = this.opts.height;
 
-    // Create the Application instance but only assign it to `this.pixiApp`
-    // after initialization completes successfully. This avoids a race where
-    // `destroy()` may be called while the Application is partially
-    // initialized and its internal renderer is not yet available.
-    console.log('Initializing Pixi.js Application...', {
-      width: this.opts.width,
-      height: this.opts.height,
-    });
     const app = new Application();
     // Use the parent element for resizing if available, otherwise fallback to window
     // This allows the Pixi canvas to fill its container (Player component)

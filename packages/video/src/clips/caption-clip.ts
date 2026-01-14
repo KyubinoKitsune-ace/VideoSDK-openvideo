@@ -730,7 +730,6 @@ export class CaptionClip extends BaseClip implements IClip {
     this.emit('propsChange', opts as any);
   }
 
-
   private async refreshCaptions() {
     if (!this.pixiTextContainer) {
       this.pixiTextContainer = new Container();

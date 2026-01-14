@@ -33,12 +33,13 @@
         "noExcessiveCognitiveComplexity": "warn"
       },
       "correctness": {
-        "useExhaustiveDependencies": "warn",
+        "useExhaustiveDependencies": "off",
         "useUniqueElementIds": "warn"
       },
       "suspicious": {
         "noExplicitAny": "off",
-        "noUnsafeDeclarationMerging": "off"
+        "noUnsafeDeclarationMerging": "off",
+        "noArrayIndexKey": "off"
       },
       "a11y": {
         "noSvgWithoutTitle": "off",
