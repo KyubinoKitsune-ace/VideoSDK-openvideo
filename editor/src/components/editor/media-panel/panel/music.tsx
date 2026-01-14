@@ -1,7 +1,7 @@
 'use client';
 
 import { useStudioStore } from '@/stores/studio-store';
-import { AudioClip, Log } from '@designcombo/video';
+import { Audio, Log } from '@designcombo/video';
 import { IconMusic } from '@tabler/icons-react';
 import { AudioItem } from './audio-item';
 import { useState, useEffect, useCallback } from 'react';
@@ -80,7 +80,7 @@ export default function PanelMusic() {
     if (!studio) return;
 
     try {
-      const audioClip = await AudioClip.fromUrl(url);
+      const audioClip = await Audio.fromUrl(url);
       await studio.addClip(audioClip, url);
     } catch (error) {
       Log.error('Failed to add audio:', error);

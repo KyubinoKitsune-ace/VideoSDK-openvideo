@@ -3,7 +3,7 @@ import { TRACK_COLORS } from '../utils';
 import { Control } from 'fabric';
 import { createTrimControls } from '../controls';
 
-export class VideoClip extends BaseTimelineClip {
+export class Video extends BaseTimelineClip {
   isSelected: boolean;
   static createControls(): { controls: Record<string, Control> } {
     return { controls: createTrimControls() };
@@ -23,7 +23,7 @@ export class VideoClip extends BaseTimelineClip {
 
   constructor(options: BaseClipProps) {
     super(options);
-    // Object.assign(this, VideoClip.ownDefaults);
+    // Object.assign(this, Video.ownDefaults);
     this.set({
       fill: options.fill || TRACK_COLORS.video.solid,
     });

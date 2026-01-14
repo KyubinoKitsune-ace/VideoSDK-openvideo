@@ -3,7 +3,7 @@ import { TRACK_COLORS } from '../utils';
 import { createResizeControls } from '../controls';
 import { Control } from 'fabric';
 
-export class ImageClip extends BaseTimelineClip {
+export class Image extends BaseTimelineClip {
   isSelected: boolean;
 
   static createControls(): { controls: Record<string, Control> } {
@@ -24,7 +24,7 @@ export class ImageClip extends BaseTimelineClip {
 
   constructor(options: BaseClipProps) {
     super(options);
-    Object.assign(this, ImageClip.ownDefaults);
+    Object.assign(this, Image.ownDefaults);
     this.set({
       // fill: options.fill || TRACK_COLORS.image.solid,
     });

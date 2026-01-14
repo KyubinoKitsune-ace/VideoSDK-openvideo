@@ -3,7 +3,7 @@
 import { IconMicrophone } from '@tabler/icons-react';
 import { useGeneratedStore } from '@/stores/generated-store';
 import { useStudioStore } from '@/stores/studio-store';
-import { AudioClip, Log } from '@designcombo/video';
+import { Audio, Log } from '@designcombo/video';
 import { AudioItem } from './audio-item';
 import { useState } from 'react';
 import { VoiceoverChatPanel } from '../voiceover-chat-panel';
@@ -16,7 +16,7 @@ export default function PanelVoiceovers() {
   const handleAddAudio = async (url: string) => {
     if (!studio) return;
     try {
-      const audioClip = await AudioClip.fromUrl(url);
+      const audioClip = await Audio.fromUrl(url);
       await studio.addClip(audioClip, url);
     } catch (error) {
       Log.error('Failed to add audio:', error);

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudioStore } from '@/stores/studio-store';
-import { ImageClip, VideoClip, Log } from '@designcombo/video';
+import { Image, Video, Log } from '@designcombo/video';
 import { Upload, Search, Image as ImageIcon, Film } from 'lucide-react';
 import { uploadFile } from '@/lib/upload-utils';
 import {
@@ -90,7 +90,7 @@ export default function PanelUploads() {
 
     try {
       if (asset.type === 'image') {
-        const imageClip = await ImageClip.fromUrl(
+        const imageClip = await Image.fromUrl(
           asset.src + '?v=' + Date.now()
         );
         imageClip.display = { from: 0, to: 5 * 1e6 };
@@ -102,7 +102,7 @@ export default function PanelUploads() {
 
         await studio.addClip(imageClip);
       } else {
-        const videoClip = await VideoClip.fromUrl(asset.src);
+        const videoClip = await Video.fromUrl(asset.src);
         // Scale to fit and center in scene (1080x1920)
         await videoClip.scaleToFit(1080, 1920);
         videoClip.centerInScene(1080, 1920);

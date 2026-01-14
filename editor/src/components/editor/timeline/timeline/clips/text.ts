@@ -6,7 +6,7 @@ import { editorFont } from '@/components/editor/constants';
 
 export interface TextClipProps extends BaseClipProps {}
 
-export class TextClip extends BaseTimelineClip {
+export class Text extends BaseTimelineClip {
   text: string;
   isSelected: boolean;
 
@@ -27,7 +27,7 @@ export class TextClip extends BaseTimelineClip {
 
   constructor(options: TextClipProps) {
     super(options);
-    Object.assign(this, TextClip.ownDefaults);
+    Object.assign(this, Text.ownDefaults);
     this.text = 'Text clip';
     this.set({
       // fill: TRACK_COLORS.text.solid,

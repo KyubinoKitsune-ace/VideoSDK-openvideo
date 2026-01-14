@@ -1,10 +1,10 @@
 import { Canvas, Rect, type FabricObject, ActiveSelection } from 'fabric';
 import { Track } from './track';
 import {
-  TextClip,
-  VideoClip,
-  AudioClip,
-  ImageClip,
+  Text,
+  Video,
+  Audio,
+  Image,
   EffectClip,
   type BaseTimelineClip,
   TransitionClip,
@@ -566,17 +566,17 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
             };
 
             if (clip.type === 'Audio') {
-              timelineClip = new AudioClip(commonProps);
+              timelineClip = new Audio(commonProps);
             } else if (clip.type === 'Video' || clip.type === 'Placeholder') {
-              timelineClip = new VideoClip(commonProps);
+              timelineClip = new Video(commonProps);
             } else if (clip.type === 'Image') {
-              timelineClip = new ImageClip(commonProps);
+              timelineClip = new Image(commonProps);
             } else if (clip.type === 'Effect') {
               timelineClip = new EffectClip(commonProps);
             } else if (clip.type === 'Transition') {
               timelineClip = new TransitionClip(commonProps);
             } else {
-              timelineClip = new TextClip(commonProps);
+              timelineClip = new Text(commonProps);
             }
 
             this.#clipObjects.set(clip.id, timelineClip);

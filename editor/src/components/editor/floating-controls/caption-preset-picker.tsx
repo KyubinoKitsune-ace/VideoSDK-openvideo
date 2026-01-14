@@ -33,7 +33,7 @@ const CaptionPresetPicker = () => {
   const handleApplyPreset = async (preset: ICaptionsControlProps) => {
     if (!studio) return;
 
-    // Filter for CaptionClips
+    // Filter for Captions
     const captionClips = selectedClips.filter((c) => c.type === 'Caption');
     if (captionClips.length === 0) return;
 
@@ -47,7 +47,7 @@ const CaptionPresetPicker = () => {
     const x = preset.boxShadow?.x ?? 4;
     const y = preset.boxShadow?.y ?? 0;
 
-    // Map ICaptionsControlProps to ICaptionClipOpts
+    // Map ICaptionsControlProps to ICaptionOpts
     const styleUpdate: any = {
       fill: preset.color,
       strokeWidth: preset.borderWidth,

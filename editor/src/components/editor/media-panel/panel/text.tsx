@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { useStudioStore } from '@/stores/studio-store';
-import { TextClip, Log } from '@designcombo/video';
+import { Text, Log } from '@designcombo/video';
 
 const TEXT_PRESETS = [
   {
@@ -103,7 +103,7 @@ export default function PanelText() {
     if (!studio) return;
 
     try {
-      const textClip = new TextClip(preset ? preset.description : 'Add Text', {
+      const textClip = new Text(preset ? preset.description : 'Add Text', {
         fontSize: preset?.style.fontSize || 124,
         fontFamily: preset?.style.fontFamily || 'Arial',
         align: 'center',

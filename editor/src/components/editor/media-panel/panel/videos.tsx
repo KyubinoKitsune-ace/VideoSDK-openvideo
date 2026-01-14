@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudioStore } from '@/stores/studio-store';
-import { VideoClip, Log, PlaceholderClip } from '@designcombo/video';
+import { Video, Log, PlaceholderClip } from '@designcombo/video';
 import { Search, Film, Loader2 } from 'lucide-react';
 import {
   InputGroup,
@@ -107,7 +107,7 @@ export default function PanelVideos() {
 
       // 2. Load the real clip in the background
       console.log('REPLACING LOADING');
-      VideoClip.fromUrl(src)
+      Video.fromUrl(src)
         .then(async (videoClip) => {
           // 3. Replace all placeholders with this source once loaded
           console.log('REPLACING LOADED');
