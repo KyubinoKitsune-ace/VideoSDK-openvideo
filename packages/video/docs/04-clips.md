@@ -1,59 +1,43 @@
 # Clips
 
-Clips are the building blocks of your video composition. DesignCombo supports three types of clips: Video, Image, and Text.
+Clips are the building blocks of your video composition. DesignCombo supports several types of clips: Video, Image, Text, Audio, and Captions.
 
 ## Video Clips
 
 ### Loading Video Clips
 
 ```ts
+import { Video } from "@designcombo/video";
+
 // Load from URL
-});
+const videoClip = await Video.fromUrl("video.mp4");
 
-// Load from File object
-const videoClip = await Combo.Video.fromFile(file, {
-  x: 0,
-  y: 0,
-});
-
-// Load from Blob
-const videoClip = await Combo.Video.fromBlob(blob);
+// For Compositor (Worker/Server), you can also pass a ReadableStream
+// const videoClip = new Video(stream);
 ```
 
 ### Video Properties
 
 ```ts
-videoClip.set({
-  // Position
-  x: 100,
-  y: 200,
+videoClip.left = 100;    // X position
+videoClip.top = 200;     // Y position
+videoClip.width = 800;
+videoClip.height = 600;
+videoClip.angle = 45;    // Rotation in degrees
+videoClip.opacity = 0.8;
+videoClip.volume = 0.5;  // 0.0 to 1.0
 
-  // Size
-  width: 800,
-  height: 600,
-  scale: 1.0,
+// Timeline range (in microseconds)
+videoClip.display = {
+  from: 0,
+  to: 5e6, // 5 seconds
+};
 
-  // Transform
-  rotation: 0,
-  opacity: 1.0,
-
-  // Timeline
-  display: {
-    from: 0,
-    to: 300,
-  },
-
-  // Playback
-  volume: 0.8,
-  muted: false,
-  playbackRate: 1.0,
-
-  // Trim video
-  trim: {
-    start: 0, // Trim from start (ms)
-    end: 5000, // Trim from end (ms)
-  },
-});
+// Trim source media (in microseconds)
+videoClip.trim = {
+  from: 1e6, // Start 1 second in
+  to: 4e6,   // End at 4 seconds
+};
 ```
 
 ### Video Methods
@@ -80,71 +64,25 @@ console.log(videoClip.isPlaying); // Playing state
 ### Loading Image Clips
 
 ```ts
+import { Image } from "@designcombo/video";
+
 // Load from URL
-const imageClip = await Combo.Image.fromUrl("photo.jpg", {
-  x: 0,
-  y: 0,
-  width: 1920,
-  height: 1080,
-});
-
-// Load from File object
-const imageClip = await Combo.Image.fromFile(file);
-
-// Load from data URL
-const imageClip = await Combo.Image.fromDataUrl(dataUrl);
+const imageClip = await Image.fromUrl("photo.jpg");
 ```
 
-### Image Properties
+### Image Transformations
+
+Instead of a `fit` property, DesignCombo provides helper methods to size images:
 
 ```ts
-imageClip.set({
-  // Position
-  x: 100,
-  y: 200,
+// Scale to fit within dimensions
+await imageClip.scaleToFit(1920, 1080);
 
-  // Size
-  width: 800,
-  height: 600,
-  scale: 1.0,
+// Scale to fill dimensions (may crop)
+await imageClip.scaleToFill(1920, 1080);
 
-  // Maintain aspect ratio
-  fit: "cover", // "cover", "contain", "fill", "none"
-
-  // Transform
-  rotation: 45,
-  opacity: 0.8,
-
-  // Timeline
-  display: {
-    from: 0,
-    to: 150,
-  },
-
-  // Filters
-  filters: {
-    brightness: 1.2,
-    contrast: 1.1,
-    saturation: 0.9,
-    blur: 0,
-  },
-});
-```
-
-### Image Fit Modes
-
-```ts
-// Cover - fills the area, may crop
-imageClip.set({ fit: "cover" });
-
-// Contain - fits within area, may show letterbox
-imageClip.set({ fit: "contain" });
-
-// Fill - stretches to fill area
-imageClip.set({ fit: "fill" });
-
-// None - original size
-imageClip.set({ fit: "none" });
+// Center in scene
+imageClip.centerInScene(1920, 1080);
 ```
 
 ## Text Clips
@@ -152,12 +90,12 @@ imageClip.set({ fit: "none" });
 ### Creating Text Clips
 
 ```ts
-const textClip = new Combo.Text("Hello World", {
+import { Text } from "@designcombo/video";
+
+const textClip = new Text("Hello World", {
   fontSize: 48,
   fontFamily: "Arial",
-  x: 960,
-  y: 540,
-  color: "#ffffff",
+  fill: "#ffffff",
 });
 ```
 
@@ -165,59 +103,29 @@ const textClip = new Combo.Text("Hello World", {
 
 ```ts
 textClip.set({
-  // Content
-  text: "Updated text",
+  // Content (via style or direct property in construction)
 
   // Font
-  fontSize: 64,
-  fontFamily: "Ubuntu",
-  fontWeight: "bold", // "normal", "bold", "100"-"900"
-  fontStyle: "italic", // "normal", "italic"
-
-  // Color
-  color: "#ff0000",
-
-  // Stroke
-  strokeColor: "#000000",
-  strokeWidth: 2,
-
-  // Background
-  backgroundColor: "rgba(0, 0, 0, 0.5)",
-  padding: 20,
-
-  // Alignment
-  textAlign: "center", // "left", "center", "right"
-  textBaseline: "middle", // "top", "middle", "bottom"
-
-  // Position
-  x: 960,
-  y: 540,
-
-  // Transform
-  rotation: 0,
-  opacity: 1.0,
-  scale: 1.0,
-
-  // Timeline
-  display: {
-    from: 0,
-    to: 300,
-  },
-
-  // Line height
-  lineHeight: 1.5,
-  letterSpacing: 0,
-
-  // Max width (for text wrapping)
-  maxWidth: 800,
+  style: {
+    fontSize: 64,
+    fontFamily: "Ubuntu",
+    fontWeight: "bold",
+    fontStyle: "italic",
+    fill: "#ff0000",
+    stroke: "#000000",
+    strokeWidth: 2,
+  }
 });
+
+textClip.left = 100;
+textClip.top = 200;
 ```
 
 ### Text Styling
 
 ```ts
 // Multi-line text
-const textClip = new Combo.Text("Line 1\nLine 2\nLine 3", {
+const textClip = new Text("Line 1\nLine 2\nLine 3", {
   fontSize: 48,
   textAlign: "center",
   lineHeight: 1.5,
@@ -253,75 +161,52 @@ textClip.set({
 
 ```ts
 // Absolute positioning
-clip.set({ x: 100, y: 200 });
+clip.left = 100;
+clip.top = 200;
 
-// Center on canvas
-clip.centerX();
-clip.centerY();
-clip.center(); // Both X and Y
-
-// Align to edges
-clip.alignLeft(margin);
-clip.alignRight(margin);
-clip.alignTop(margin);
-clip.alignBottom(margin);
+// Center on canvas/scene
+clip.centerInScene(1920, 1080);
 ```
 
 ### Sizing
 
 ```ts
 // Set explicit size
-clip.set({ width: 800, height: 600 });
+clip.width = 800;
+clip.height = 600;
 
-// Scale proportionally
-clip.set({ scale: 1.5 });
-
-// Fit to canvas
-clip.fitToCanvas();
-clip.fillCanvas();
+// Propagate changes via helper methods
+await clip.scaleToFit(1920, 1080);
 ```
 
 ### Rotation
 
 ```ts
 // Set rotation in degrees
-clip.set({ rotation: 45 });
-
-// Rotate around custom origin
-clip.set({
-  rotation: 45,
-  originX: 0.5, // 0 = left, 0.5 = center, 1 = right
-  originY: 0.5, // 0 = top, 0.5 = center, 1 = bottom
-});
+clip.angle = 45;
 ```
 
 ### Opacity
 
 ```ts
 // Set opacity (0-1)
-clip.set({ opacity: 0.5 });
+clip.opacity = 0.5;
 
-// Fade in/out (use animations)
-clip.animate({
-  property: "opacity",
-  fromValue: 0,
-  toValue: 1,
-  startFrame: 0,
-  duration: 30,
-});
+// Animations (microseconds)
+clip.setAnimation(
+  {
+    '0%': { opacity: 0 },
+    '100%': { opacity: 1 },
+  },
+  { duration: 1e6 } // 1 second
+);
 ```
 
 ### Layering (Z-Index)
 
 ```ts
 // Set layer order
-clip.set({ zIndex: 10 });
-
-// Bring to front/back
-clip.bringToFront();
-clip.sendToBack();
-clip.bringForward();
-clip.sendBackward();
+clip.zIndex = 10;
 ```
 
 ### Visibility
@@ -343,32 +228,9 @@ if (clip.isVisible) {
 Listen to clip events:
 
 ```ts
-// Loading events
-clip.on("load", () => {
-  console.log("Clip loaded");
-});
-
-clip.on("error", (error) => {
-  console.error("Failed to load clip:", error);
-});
-
-// Playback events (video clips)
-videoClip.on("play", () => console.log("Playing"));
-videoClip.on("pause", () => console.log("Paused"));
-videoClip.on("ended", () => console.log("Ended"));
-
 // Property changes
-clip.on("change", (property, value) => {
-  console.log(`${property} changed to ${value}`);
-});
-
-// Timeline events
-clip.on("enter", (frame) => {
-  console.log(`Clip entered at frame ${frame}`);
-});
-
-clip.on("exit", (frame) => {
-  console.log(`Clip exited at frame ${frame}`);
+clip.on("propsChange", (props) => {
+  console.log('Properties changed:', props);
 });
 ```
 
@@ -400,50 +262,35 @@ clip.destroy();
 
 DesignCombo is built on PixiJS, so you can create custom clips using PixiJS containers and sprites.
 
-### Basic Custom Clip
-
-Create custom clip types using PixiJS:
+### Custom Clip
 
 ```ts
-import * as PIXI from "pixi.js";
+import { BaseClip, type IClipMeta } from "@designcombo/video";
 
-class CustomClip extends Combo.Clip {
-  constructor(options) {
-    super(options);
+class CustomClip extends BaseClip {
+  readonly type = 'custom';
+  readonly meta: IClipMeta = { width: 100, height: 100, duration: 10e6 };
+  readonly ready = Promise.resolve(this.meta);
 
-    // Create PixiJS container
-    this.container = new PIXI.Container();
-
-    // Add custom graphics
-    const graphics = new PIXI.Graphics();
-    graphics.beginFill(0xff6600);
-    graphics.drawRect(0, 0, this.width, this.height);
-    graphics.endFill();
-
-    this.container.addChild(graphics);
+  async tick(time: number) {
+    // Return video frame or audio data here
+    return {
+      state: 'success'
+    };
   }
 
-  render(frame) {
-    // Update container properties
-    this.container.x = this.x;
-    this.container.y = this.y;
-    this.container.rotation = this.rotation * (Math.PI / 180);
-    this.container.alpha = this.opacity;
-
-    // Return PixiJS container
-    return this.container;
+  async clone() {
+    const c = new CustomClip();
+    this.copyStateTo(c);
+    return c;
   }
 }
-
-// Use custom clip
-const custom = new CustomClip({ x: 0, y: 0, width: 100, height: 100 });
-studio.add(custom);
 ```
 
 ### Custom Sprite Clip
 
 ```ts
-class SpriteClip extends Combo.Clip {
+class SpriteClip extends BaseClip {
   constructor(texture, options) {
     super(options);
 

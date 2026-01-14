@@ -1,357 +1,148 @@
 # Events
 
-DesignCombo Studio emits events throughout the lifecycle of your composition, allowing you to listen for state changes, user interactions, and playback updates.
+The `@designcombo/video` SDK provides a robust event system across the `Studio`, `Compositor`, and individual `Clip` instances. This allows you to build responsive UIs that react to playback, selection, and composition changes.
 
-## Event System Overview
+## Studio Events
 
-The Studio class extends an EventEmitter, providing a robust event system for:
+The `Studio` class manages the main preview environment and emits events for high-level state changes.
 
-- **Lifecycle Events**: When the studio is ready, destroyed, or rendered
-- **Playback Events**: Play, pause, seek, and frame updates
-- **Transform Events**: When objects are moved, scaled, or rotated
-- **Selection Events**: When objects are selected or deselected
-- **Mouse Events**: Mouse down, move, and up interactions
-- **Object Events**: Object clicks and interactions
+### Playback Events
 
-## Basic Event Listening
-
-### Using `on()`
+#### `currentTime`
+Emitted during playback or when seeking. The payload contains the current time in microseconds.
 
 ```ts
-import { Studio } from "@designcombo/video";
-
-const studio = new Studio({
-  width: 1920,
-  height: 1080,
-  fps: 30,
-  bgColor: "#000000",
-  canvas: document.getElementById("canvas-element"),
-});
-
-// Listen for clip added event
-studio.on("clip:added", (event) => {
-  console.log("Clip added:", event.clip);
+studio.on("currentTime", ({ currentTime }) => {
+  console.log("Current time (μs):", currentTime);
 });
 ```
 
-## Lifecycle Events
-
-### `ready`
-
-Emitted when the studio is fully initialized and ready to use.
+#### `play` / `pause`
+Emitted when the playback state changes.
 
 ```ts
-studio.on("ready", () => {
-  console.log("Studio is ready to use");
+studio.on("play", ({ isPlaying }) => {
+  console.log("Playback started");
+});
+
+studio.on("pause", ({ isPlaying }) => {
+  console.log("Playback paused");
 });
 ```
 
-### `destroy`
+### Selection Events
 
-Emitted when the studio is destroyed.
-
-```ts
-studio.on("destroy", () => {
-  console.log("Studio has been destroyed");
-});
-
-// Later...
-studio.destroy();
-```
-
-## Playback Events
-
-### `play`
-
-Emitted when playback starts.
+#### `selection:created`
+Emitted when one or more clips are selected.
 
 ```ts
-studio.on("play", (frame) => {
-  console.log("Started playing at frame:", frame);
-});
-
-studio.play(); // Triggers the event with current frame
-```
-
-### `pause`
-
-Emitted when playback is paused.
-
-```ts
-studio.on("pause", (frame) => {
-  console.log("Paused at frame:", frame);
-});
-
-studio.pause(); // Triggers the event with current frame
-```
-
-### `frameUpdate` / `currentframe`
-
-Emitted on every frame update during playback.
-
-```ts
-studio.on("frameUpdate", (frame) => {
-  console.log("Frame:", frame);
-  // Update your UI with current frame number
-});
-
-// Also available as 'currentframe'
-studio.on("currentframe", (frame) => {
-  console.log("Current frame:", frame);
+studio.on("selection:created", ({ selected }) => {
+  console.log("Selected clips:", selected);
 });
 ```
 
-### `seek`
-
-Emitted when seeking to a different frame.
-
-```ts
-studio.on("seek", (frame) => {
-  console.log("Seeked to frame:", frame);
-});
-
-await studio.seek(100); // Seeks to frame 100
-```
-
-## Transform Events
-
-### `object:modified`
-
-Emitted when an object's transformation is complete (after release).
+#### `selection:updated`
+Emitted when the current selection changes (e.g., adding a clip to an existing selection).
 
 ```ts
-studio.on("object:modified", (event) => {
-  const { target, transform } = event;
-  console.log("Object modified:", target);
-  console.log("Transform action:", transform?.action);
-});
-
-// This event fires after you finish moving/scaling/rotating an object
-```
-
-### `object:moving`
-
-Emitted continuously while an object is being moved or scaled.
-
-```ts
-studio.on("object:moving", (event) => {
-  console.log("Object is being moved:", event.target);
+studio.on("selection:updated", ({ selected }) => {
+  console.log("Updated selection:", selected);
 });
 ```
 
-### `object:transforming`
-
-Emitted when an object starts being transformed.
+#### `selection:cleared`
+Emitted when all clips are deselected.
 
 ```ts
-studio.on("object:transforming", (event) => {
-  console.log("Transforming started:", event.target);
+studio.on("selection:cleared", ({ deselected }) => {
+  console.log("Deselected clips:", deselected);
 });
 ```
 
-## Selection Events
+### Composition Events
 
-### `selection:created`
-
-Emitted when objects are first selected.
+#### `clip:added` / `clip:removed`
+Emitted when clips are added to or removed from the studio.
 
 ```ts
-studio.on("selection:created", (event) => {
-  const { selected, target } = event;
-  console.log("Selection created:", selected);
-  console.log("Target object:", target);
+studio.on("clip:added", ({ clip, trackId }) => {
+  console.log(`Clip ${clip.id} added to track ${trackId}`);
+});
+
+studio.on("clip:removed", ({ clipId }) => {
+  console.log("Clip removed:", clipId);
 });
 ```
 
-### `selection:updated`
-
-Emitted when selection changes (objects added or removed from selection).
+#### `clip:updated`
+Emitted when a clip's metadata or timeline position is updated via the studio.
 
 ```ts
-studio.on("selection:updated", (event) => {
-  console.log("Newly selected:", event.selected);
-  console.log("Deselected:", event.deselected);
+studio.on("clip:updated", ({ clip }) => {
+  console.log("Clip updated:", clip.id);
 });
 ```
 
-### `selection:cleared`
-
-Emitted when all selections are cleared.
+#### `track:added` / `track:removed`
+Emitted when tracks are modified.
 
 ```ts
-studio.on("selection:cleared", (event) => {
-  console.log("Selection cleared:", event.deselected);
+studio.on("track:added", ({ track }) => {
+  console.log("New track added:", track.id);
 });
 ```
 
-## Mouse Events
-
-### `mouse:down`
-
-Emitted when the mouse button is pressed.
+#### `reset`
+Emitted when the studio state is completely reset.
 
 ```ts
-studio.on("mouse:down", (event) => {
-  const { target, pointer, e } = event;
-  console.log("Mouse down at:", pointer.x, pointer.y);
-  console.log("Target:", target);
-  console.log("Original event:", e);
+studio.on("reset", () => {
+  console.log("Studio reset");
 });
 ```
 
-### `mouse:move`
+## Clip Events
 
-Emitted when the mouse moves.
+Individual clips emit events for property changes. This is particularly useful for syncing properties panels or other reactive UI elements.
+
+### `propsChange`
+Emitted when any property of the clip (like `left`, `top`, `width`, `height`, `angle`, `opacity`, etc.) is changed.
 
 ```ts
-studio.on("mouse:move", (event) => {
-  const { target, pointer } = event;
-  console.log("Mouse at:", pointer.x, pointer.y);
+clip.on("propsChange", (changes) => {
+  console.log("Modified properties:", changes);
+  // Example: { left: 100, top: 200 }
 });
 ```
 
-### `mouse:up`
+## Compositor Events
 
-Emitted when the mouse button is released.
+The `Compositor` is used for high-performance rendering and exports. It emits progress events during the rendering process.
 
-```ts
-studio.on("mouse:up", (event) => {
-  const { target, pointer } = event;
-  console.log("Mouse up at:", pointer.x, pointer.y);
-});
-```
-
-## Object Interaction Events
-
-### `object:clicked`
-
-Emitted when an object is clicked.
+### `OutputProgress`
+Emitted during the rendering/export process.
 
 ```ts
-studio.on("object:clicked", (event) => {
-  const { target, pointer, e } = event;
-  console.log("Object clicked:", target);
-  console.log("Click position:", pointer.x, pointer.y);
-  console.log("Original event:", e);
-});
-```
-
-## Removing Event Listeners
-
-### Using `off()`
-
-```ts
-const handler = (frame: number) => {
-  console.log("Frame:", frame);
-};
-
-studio.on("frameUpdate", handler);
-
-// Later, remove the listener
-studio.off("frameUpdate", handler);
-```
-
-### Using `once()`
-
-Listen for an event only once:
-
-```ts
-studio.once("ready", () => {
-  console.log("This will only fire once");
+compositor.on("OutputProgress", (progress) => {
+  console.log(`Render progress: ${Math.round(progress * 100)}%`);
 });
 ```
 
 ## Best Practices
 
-### 1. Clean Up Listeners
-
-Always remove event listeners when components unmount:
-
-```ts
-// React example
-useEffect(() => {
-  const handler = (frame: number) => {
-    setCurrentFrame(frame);
-  };
-
-  studio.on("frameUpdate", handler);
-
-  return () => {
-    studio.off("frameUpdate", handler);
-  };
-}, [studio]);
-```
-
-### 3. Avoid Expensive Operations
-
-Keep event handlers lightweight to maintain smooth playback:
+### Cleanup
+Always remove event listeners when they are no longer needed (e.g., when a component unmounts) to avoid memory leaks.
 
 ```ts
-// Good: Simple operations
-studio.on("frameUpdate", (frame) => {
-  updateFrameDisplay(frame);
-});
+const handleTime = ({ currentTime }) => {
+  // ...
+};
 
-// Bad: Heavy operations in frame updates
-studio.on("frameUpdate", (frame) => {
-  doHeavyComputation(); // This will cause stuttering
-});
+studio.on("currentTime", handleTime);
 
-// Better: Debounce heavy operations
-studio.on(
-  "frameUpdate",
-  debounce((frame) => {
-    updateComplexUI(frame);
-  }, 100)
-);
+// Later...
+studio.off("currentTime", handleTime);
 ```
 
-## Complete Event Example
-
-```ts
-import { Studio } from "designcombo";
-
-const studio = new Studio("canvas-element");
-await studio.init();
-
-// Set up event listeners
-studio.on("frameUpdate", (frame) => {
-  updateTimelinePosition(frame);
-});
-
-studio.on("object:modified", (event) => {
-  saveUndoState();
-  console.log("Object modified:", event.target);
-});
-
-// Start playback
-studio.play();
-```
-
-## Event Reference
-
-| Event Name            | Payload                   | When Emitted                |
-| --------------------- | ------------------------- | --------------------------- |
-| `ready`               | `undefined`               | Studio is initialized       |
-| `destroy`             | `undefined`               | Studio is destroyed         |
-| `play`                | `number` (frame)          | Playback starts             |
-| `pause`               | `number` (frame)          | Playback pauses             |
-| `frameUpdate`         | `number` (frame)          | Every frame during playback |
-| `currentframe`        | `number` (frame)          | Same as frameUpdate         |
-| `seek`                | `number` (frame)          | Seeking to a frame          |
-| `object:modified`     | `ObjectModifiedEvent`     | Object transform complete   |
-| `object:moving`       | `ObjectMovingEvent`       | Object is being moved       |
-| `object:transforming` | `ObjectTransformingEvent` | Object transform starts     |
-| `selection:created`   | `SelectionCreatedEvent`   | Objects selected            |
-| `selection:updated`   | `SelectionUpdatedEvent`   | Selection changes           |
-| `selection:cleared`   | `SelectionClearedEvent`   | Selection cleared           |
-| `mouse:down`          | `MouseDownEvent`          | Mouse button pressed        |
-| `mouse:move`          | `MouseMoveEvent`          | Mouse moves                 |
-| `mouse:up`            | `MouseUpEvent`            | Mouse button released       |
-| `object:clicked`      | `ObjectClickedEvent`      | Object is clicked           |
-
-## Next Steps
-
-- [Studio API](./03-studio.md) - Master studio management
-- [Tracks](./09-tracks.md) - Organize your effects
-- [API Reference](./12-api-reference.md) - Complete API documentation
+### Lightweight Handlers
+Keep your event handlers lightweight. For expensive operations (like complex UI updates on every `currentTime` tick), consider throttling or using `requestAnimationFrame`.

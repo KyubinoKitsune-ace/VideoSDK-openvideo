@@ -31,10 +31,10 @@ When you add a clip without a `trackId`, the Studio may create a new track for i
 const textTrackId = "text-layer";
 const bgTrackId = "bg-layer";
 
-const bgClip = await Combo.Video.fromUrl("bg.mp4");
+const bgClip = await Video.fromUrl("bg.mp4");
 await studio.addClip(bgClip, { trackId: bgTrackId });
 
-const textClip = new Combo.Text("Overlay", {});
+const textClip = new Text("Overlay", {});
 await studio.addClip(textClip, { trackId: textTrackId });
 ```
 

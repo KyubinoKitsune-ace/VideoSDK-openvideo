@@ -5,116 +5,80 @@ The Studio is the interactive workspace for your video editing. It manages the v
 ## Creating a Studio
 
 ```ts
-    backgroundColor: 0xf5f5f5,
-    antialias: true,
-  },
+import { Studio } from "@designcombo/video";
+
+const studio = new Studio({
+  width: 1920,
+  height: 1080,
+  fps: 30,
+  bgColor: "#ffffff",
+  canvas: document.getElementById("canvas") as HTMLCanvasElement,
 });
 
-await studio.init();
+// The studio initializes its PixiJS application automatically on construction (via initPixiApp).
+// You can wait for it to be ready:
+await studio.ready;
 ```
 
 ## Configuration Options
 
-### StudioSettings
+### IStudioOpts
 
 ```ts
-interface StudioSettings {
-  width?: number; // Artboard width (default: 800)
-  height?: number; // Artboard height (default: 600)
-  backgroundColor?: number; // Canvas background color (hex)
-  antialias?: boolean; // Enable antialiasing (default: true)
-  artboard?: ArtboardConfig; // Advanced artboard settings
+interface IStudioOpts {
+  width: number;
+  height: number;
+  fps?: number;
+  bgColor?: string;
+  canvas?: HTMLCanvasElement;
+  interactivity?: boolean;
 }
 ```
 
-### TransformerOptions
+### Interactive Controls
+
+The Studio supports interactive transformations (moving, scaling, rotating) by default. You can disable this via the `interactivity` option:
 
 ```ts
-const studio = new Combo.Studio("canvas-element", {
-  transformerOptions: {
-    rotateEnabled: true,
-    scaleEnabled: true,
-    translateEnabled: true,
-    wireframeStyle: {
-      color: 0xa855f7,
-      thickness: 2.5,
-    },
-  },
-});
-```
-
-### SelectionBoxStyle
-
-```ts
-const studio = new Combo.Studio("canvas-element", {
-  selectionBoxStyle: {
-    strokeColor: 0x007acc,
-    strokeWidth: 2,
-    strokeAlpha: 0.8,
-    fillColor: 0x007acc,
-    fillAlpha: 0.1,
-  },
+const studio = new Studio({
+  width: 1920,
+  height: 1080,
+  interactivity: false, // Disable all interactive controls
 });
 ```
 
 ## Adding and Removing Objects
 
-### add()
+### addClip()
 
-Add objects to the studio:
+Add clips to the studio:
 
 ```ts
-const rect = new RectEffect({ x: 100, y: 100, width: 200, height: 200 });
-studio.add(rect);
+import { Image } from "@designcombo/video";
 
-const circle = new CircleEffect({ x: 300, y: 300, radius: 50 });
-studio.add(circle);
+const image = await Image.fromUrl("photo.jpg");
+studio.addClip(image);
 ```
 
-### remove()
+### removeClip()
 
-Remove objects from the studio:
+Remove clips from the studio:
 
 ```ts
-studio.remove(rect);
+studio.removeClip(image.id);
 ```
 
 ## Selection Management
 
-### setActiveObject()
+### selectedClips
 
-Select a specific object:
-
-```ts
-studio.setActiveObject(circle.container);
-```
-
-### clearSelection()
-
-Clear all selections:
+Get the currently selected clips:
 
 ```ts
-studio.clearSelection();
-```
-
-### activeObject
-
-Get the currently selected object:
-
-```ts
-const selected = studio.activeObject;
-if (selected) {
-  console.log("Object selected");
+const selected = studio.selectedClips; // Set<IClip>
+if (selected.size > 0) {
+  console.log(`${selected.size} clips selected`);
 }
-```
-
-### activeObjects
-
-Get all selected objects (multi-selection):
-
-```ts
-const allSelected = studio.activeObjects;
-console.log(`${allSelected.length} objects selected`);
 ```
 
 ## Transformation
@@ -126,85 +90,38 @@ The studio automatically shows transform controls when objects are selected. Use
 - **Drag rotation handle** to rotate
 - **Selection box** for multi-select
 
-### Transform Events
+## Studio Events
+
+The studio implements an event emitter that notifies you about changes in the workspace.
 
 ```ts
-const studio = new Combo.Studio(
-  "canvas-element",
-  {},
-  {
-    onTransformStart: (objects) => {
-      console.log("Transform started", objects);
-    },
-    onTransformChange: (objects, delta) => {
-      console.log("Transforming", delta);
-    },
-    onTransformCommit: (objects) => {
-      console.log("Transform committed", objects);
-    },
-  }
-);
-```
+studio.on('selection:created', ({ selected }) => {
+  console.log('Selection created', selected);
+});
 
-## Selection Events
+studio.on('clip:added', ({ clip, trackId }) => {
+  console.log('Clip added', clip.id);
+});
 
-```ts
-const studio = new Combo.Studio(
-  "canvas-element",
-  {},
-  {
-    onSelectionChange: (objects) => {
-      console.log(`${objects.length} objects selected`);
-    },
-    onSelectionBoxStart: (point) => {
-      console.log("Selection box started");
-    },
-    onSelectionBoxMove: (box) => {
-      console.log("Selection box moving", box);
-    },
-    onSelectionBoxEnd: (objects) => {
-      console.log(`Selected ${objects.length} objects via box`);
-    },
-  }
-);
-```
-
-## Lifecycle Events
-
-```ts
-const studio = new Combo.Studio(
-  "canvas-element",
-  {},
-  {
-    onStudioReady: () => {
-      console.log("Studio is ready");
-    },
-    onStudioDestroy: () => {
-      console.log("Studio destroyed");
-    },
-  }
-);
+studio.on('currentTime', ({ currentTime }) => {
+  // currentTime is in microseconds
+  console.log('Current time:', currentTime);
+});
 ```
 
 ## Artboard
 
-The studio includes an internal artboard (composition area) where objects are placed. The artboard:
+The studio includes an internal artboard (composition area) where clips are placed. The artboard:
 
-- Clips child objects with a mask
+- Clips child objects with a mask to match the studio dimensions
 - Centers in the canvas viewport
-- Can have custom background and border
+- Can have a custom background color
 
 ```ts
-const studio = new Combo.Studio("canvas-element", {
-  settings: {
-    width: 1920,
-    height: 1080,
-    artboard: {
-      backgroundColor: 0xffffff,
-      borderColor: 0xe0e0e0,
-      borderWidth: 1,
-    },
-  },
+const studio = new Studio({
+  width: 1920,
+  height: 1080,
+  bgColor: "#ffffff",
 });
 ```
 
@@ -246,64 +163,44 @@ This will:
 ## Complete Example
 
 ```ts
-import { Studio, RectEffect, CircleEffect } from "designcombo";
+import { Studio, Image, Text } from "@designcombo/video";
 
 // Create studio
-const studio = new Studio(
-  document.querySelector("canvas"),
-  {
-    settings: {
-      width: 1920,
-      height: 1080,
-      backgroundColor: 0x222222,
-    },
-    transformerOptions: {
-      rotateEnabled: true,
-      scaleEnabled: true,
-      translateEnabled: true,
-    },
-    selectionBoxStyle: {
-      strokeColor: 0x007acc,
-      strokeWidth: 2,
-    },
-  },
-  {
-    onSelectionChange: (objects) => {
-      console.log(`${objects.length} objects selected`);
-    },
-    onTransformCommit: (objects) => {
-      console.log("Transform committed");
-    },
-    onStudioReady: () => {
-      console.log("Studio ready!");
-    },
-  }
-);
+const studio = new Studio({
+  width: 1920,
+  height: 1080,
+  bgColor: "#222222",
+  canvas: document.querySelector("canvas") as HTMLCanvasElement,
+});
 
-// Initialize
-await studio.init();
+// Wait for studio to be ready
+await studio.ready;
 
-// Add objects
-const rect = new RectEffect({
-  x: 200,
-  y: 200,
+// Add clips
+const image = await Image.fromUrl("photo.jpg");
+image.set({
+  left: 200,
+  top: 200,
   width: 400,
   height: 300,
-  fillColor: 0xff0000,
 });
 
-const circle = new CircleEffect({
-  x: 800,
-  y: 500,
-  radius: 100,
-  fillColor: 0x00ff00,
+const text = new Text("Hello World", {
+  fontSize: 100,
+  fill: "#ffffff",
+});
+text.set({
+  left: 800,
+  top: 500,
 });
 
-studio.add(rect);
-studio.add(circle);
+studio.addClip(image);
+studio.addClip(text);
 
-// Select an object
-studio.setActiveObject(circle.container);
+// Listen for selection changes
+studio.on('selection:created', ({ selected }) => {
+  console.log(`${selected.length} clips selected`);
+});
 
 // Later: cleanup
 // studio.destroy();

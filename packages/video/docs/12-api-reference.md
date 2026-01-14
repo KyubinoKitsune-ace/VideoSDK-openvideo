@@ -1,12 +1,10 @@
 # API Reference
 
-Complete API reference for DesignCombo.
+Complete API reference for `@designcombo/video`.
 
 ## Studio
 
 The interactive workspace for your video editing.
-
-### Constructor
 
 ### Constructor
 
@@ -17,458 +15,72 @@ const studio = new Studio({
   width: 1920,
   height: 1080,
   fps: 30,
-  bgColor: "#ffffff",
-  canvas: document.getElementById("canvas"),
+  bgColor: "#000000",
+  canvas: document.getElementById("canvas") as HTMLCanvasElement,
+  interactivity: true,
 });
-```
 
-**Parameters:**
-
-- `container` (string | HTMLElement) - Container element ID or element
-- `options` (object) - Studio configuration
-
-**Options:**
-
-```ts
-{
-  settings: {
-    width: number;        // Canvas width
-    height: number;       // Canvas height
-    fps: number;          // Frame rate
-    backgroundColor: string;  // Background color
-    duration?: number;    // Total duration in frames (optional)
-  }
-}
+await studio.ready;
 ```
 
 ### Properties
 
-```ts
-// Collections
-studio.clips: Clip[]           // All clips in studio
-studio.transitions: Transition[]  // All transitions
-
-// Timeline
-studio.duration: number        // Total duration in frames
-studio.currentFrame: number    // Current playback frame
-studio.currentTime: number     // Current time in milliseconds
-
-// Settings
-studio.settings: Settings      // Studio settings
-
-// State
-studio.isPlaying: boolean      // Playback state
-studio.stats: Stats            // Performance statistics
-studio.history: Action[]       // Edit history
-```
+- `studio.clips`: `IClip[]` - Array of all clips.
+- `studio.tracks`: `StudioTrack[]` - Array of timeline tracks.
+- `studio.currentTime`: `number` - Current time in microseconds.
+- `studio.maxDuration`: `number` - Total duration in microseconds.
+- `studio.isPlaying`: `boolean` - Playback state.
 
 ### Methods
 
-#### Adding & Removing
+- `studio.addClip(clip: IClip, trackId?: string)`: Add a clip to the studio.
+- `studio.removeClip(clipId: string)`: Remove a clip by ID.
+- `studio.play()`: Start playback.
+- `studio.pause()`: Pause playback.
+- `studio.seek(time: number)`: Seek to time (in microseconds).
+- `studio.destroy()`: Clean up resources.
 
-```ts
-studio.add(...items): void
-studio.remove(...items): void
-studio.clear(): void
-```
+## Clips
 
-#### Querying
+Base properties for all clips (`Video`, `Image`, `Text`, `Audio`, `Caption`).
 
-```ts
-// Find by ID or predicate
-studio.find(id: string): Clip | Transition | undefined
-studio.find(predicate: (item) => boolean): Clip | Transition | undefined
-studio.find(query: { type: string }): Clip | Transition | undefined
+### Base Properties
 
-// Filter by criteria
-studio.filter(predicate: (item) => boolean): Clip[]
-studio.filter(query: { type: string }): Clip[]
-
-// Get items at frame
-studio.at(frame: number): {
-  clips: Clip[];
-  transitions: Transition[];
-}
-```
-
-#### Playback
-
-```ts
-studio.play(): void
-studio.pause(): void
-studio.stop(): void
-studio.seek(frame: number): void
-studio.setPlaybackRate(rate: number): void
-```
-
-#### Timeline
-
-```ts
-studio.setDuration(frames: number): void
-studio.framesToTime(frames: number): number
-studio.timeToFrames(ms: number): number
-```
-
-#### Rendering
-
-```ts
-studio.render(): Promise<void>
-studio.renderFrame(frame: number): Promise<void>
-studio.renderRange(start: number, end: number, options?): Promise<void>
-```
-
-#### Export
-
-```ts
-studio.export(options: ExportOptions): Promise<Blob>
-studio.exportFrame(frame: number, options?): Promise<Blob>
-studio.exportFrameSequence(options: FrameSequenceOptions): Promise<void>
-```
-
-**ExportOptions:**
-
-```ts
-{
-  format: "mp4" | "webm" | "gif";
-  quality?: "low" | "medium" | "high" | "ultra";
-  videoBitrate?: number;
-  audioBitrate?: number;
-  width?: number;
-  height?: number;
-  fps?: number;
-  videoCodec?: string;
-  audioCodec?: string;
-  filename?: string;
-  startFrame?: number;
-  endFrame?: number;
-  onProgress?: (percent: number) => void;
-  onComplete?: (blob: Blob) => void;
-  onError?: (error: Error) => void;
-}
-```
-
-#### State Management
-
-```ts
-studio.undo(): void
-studio.redo(): void
-studio.canUndo(): boolean
-studio.canRedo(): boolean
-studio.clearHistory(): void
-```
-
-#### Validation
-
-```ts
-studio.validate(): ValidationError[]
-studio.validateClip(clip: Clip): ValidationError[]
-```
-
-#### Transitions
-
-```ts
-studio.addTransition(from: Clip, to: Clip, options: TransitionOptions): Transition
-studio.removeTransitionBetween(from: Clip, to: Clip): void
-```
-
-#### Configuration
-
-```ts
-studio.updateSettings(settings: Partial<Settings>): void
-studio.optimize(options?: OptimizeOptions): void
-```
-
-#### Serialization
-
-```ts
-studio.toJSON(): StudioData
-studio.fromJSON(data: StudioData): Promise<void>
-```
-
-#### Utility
-
-```ts
-studio.clone(): Promise<Studio>
-studio.snapshot(): StudioSnapshot
-studio.restore(snapshot: StudioSnapshot): void
-studio.destroy(): void
-```
-
-#### Events
-
-```ts
-studio.on(event: string, handler: Function): void
-studio.off(event: string, handler: Function): void
-studio.once(event: string, handler: Function): void
-```
-
-**Events:**
-
-- `play`, `pause`, `stop`, `seek`
-- `frameUpdate`
-- `clipAdded`, `clipRemoved`
-- `transitionAdded`, `transitionRemoved`
-- `renderStart`, `renderProgress`, `renderComplete`, `renderError`
-- `stateChange`
-
-## Clip
-
-Base class for all clips (Video, Image, Text).
-
-### Common Properties
-
-```ts
-clip.id: string
-clip.type: "video" | "image" | "text"
-clip.x: number
-clip.y: number
-clip.width: number
-clip.height: number
-clip.rotation: number
-clip.opacity: number
-clip.scale: number
-clip.visible: boolean
-clip.zIndex: number
-clip.display: { from: number; to: number }
-```
+- `clip.id`: `string`
+- `clip.left`, `clip.top`: `number` - Position.
+- `clip.width`, `clip.height`: `number` - Size.
+- `clip.angle`: `number` - Rotation in degrees.
+- `clip.opacity`: `number` (0.0 - 1.0)
+- `clip.volume`: `number` (0.0 - 1.0)
+- `clip.display`: `{ from: number; to: number }` - Range in microseconds.
+- `clip.trim`: `{ from: number; to: number }` - Source trim in microseconds.
+- `clip.playbackRate`: `number`
 
 ### Common Methods
 
-```ts
-clip.set(properties: Partial<ClipProperties>): void
-clip.animate(options: AnimationOptions): Animation
-clip.animate(preset: string, options: PresetOptions): Animation
-clip.addEffect(...effects: Effect[]): void
-clip.removeEffect(effect: Effect): void
-clip.clearEffects(): void
-clip.clone(overrides?): Clip
-clip.destroy(): void
+- `clip.set(props: Partial<IClipProps>)`: Update properties.
+- `clip.clone()`: Create a copy.
+- `clip.split(time: number)`: Split at specific time.
+- `clip.setAnimation(keyFrame: object, opts: object)`: Add keyframe animation.
 
-// Positioning helpers
-clip.center(): void
-clip.centerX(): void
-clip.centerY(): void
-clip.alignLeft(margin?): void
-clip.alignRight(margin?): void
-clip.alignTop(margin?): void
-clip.alignBottom(margin?): void
+## Compositor
 
-// Layer helpers
-clip.bringToFront(): void
-clip.sendToBack(): void
-clip.bringForward(): void
-clip.sendBackward(): void
-
-// Visibility
-clip.show(): void
-clip.hide(): void
-```
-
-## Video
-
-Video clip class.
-
-### Loading
+High-performance video compositor for exporting.
 
 ```ts
-import { Video } from "@designcombo/video";
+import { Compositor } from "@designcombo/video";
 
-Video.fromUrl(url: string, options?): Promise<Video>
-// Video.fromFile(file: File, options?): Promise<Video>
-```
+// Check support
+const supported = await Compositor.isSupported();
 
-### Properties
-
-```ts
-video.duration: number        // Video duration in microseconds usually, check implementation
-video.volume: number          // 0.0 to 1.0
-// ...
-```
-
-## Image
-
-Image clip class.
-
-### Loading
-
-```ts
-import { Image } from "@designcombo/video";
-
-Image.fromUrl(url: string, options?): Promise<Image>
-```
-
-## Text
-
-Text clip class.
-
-### Constructor
-
-```ts
-import { Text } from "@designcombo/video";
-
-new Text(text: string, options: TextOptions)
-```
-
-## Transition
-
-Transition between two clips.
-
-### Constructor
-
-```ts
-new Transition(from: Clip, to: Clip, options: TransitionOptions)
-```
-
-### Properties
-
-```ts
-transition.from: Clip
-transition.to: Clip
-transition.type: string
-transition.duration: number
-transition.easing: string | Function
+const compositor = new Compositor({
+  width: 1920,
+  height: 1080,
+  fps: 30,
+});
 ```
 
 ### Methods
 
-```ts
-transition.set(properties: Partial<TransitionProperties>): void
-```
-
-### Types
-
-Available transition types:
-
-- `fade`, `dissolve`, `wipe`, `slide`, `zoom`, `blur`
-- `split`, `pixelate`, `glitch`
-
-## Effect
-
-Base class for effects.
-
-### Built-in Effects
-
-```ts
-new Combo.Effect.Brightness({ value: number })
-new Combo.Effect.Contrast({ value: number })
-new Combo.Effect.Saturation({ value: number })
-new Combo.Effect.Blur({ radius: number })
-new Combo.Effect.HueRotate({ degrees: number })
-new Combo.Effect.Invert({ amount: number })
-new Combo.Effect.Grayscale({ amount: number })
-new Combo.Effect.Sepia({ amount: number })
-new Combo.Effect.Temperature({ value: number })
-new Combo.Effect.Tint({ color: string; amount: number })
-new Combo.Effect.Exposure({ value: number })
-new Combo.Effect.Vignette({ amount: number; radius: number; softness: number })
-new Combo.Effect.Glow({ color: string; intensity: number; radius: number })
-new Combo.Effect.Shadow({ color: string; blur: number; offsetX: number; offsetY: number })
-new Combo.Effect.Pixelate({ size: number })
-new Combo.Effect.Noise({ amount: number; monochrome: boolean })
-new Combo.Effect.Glitch({ amount: number; frequency: number })
-```
-
-### Properties
-
-```ts
-effect.enabled: boolean
-effect.type: string
-```
-
-### Methods
-
-```ts
-effect.set(properties: object): void
-effect.animate(options: AnimationOptions): Animation
-```
-
-## Animation
-
-Animation instance.
-
-### Properties
-
-```ts
-animation.property: string
-animation.fromValue: number
-animation.toValue: number
-animation.startFrame: number
-animation.duration: number
-animation.easing: string | Function
-animation.loop: boolean | number
-animation.yoyo: boolean
-```
-
-### Methods
-
-```ts
-animation.play(): void
-animation.pause(): void
-animation.stop(): void
-animation.reset(): void
-```
-
-## AudioTrack
-
-Audio track class.
-
-### Loading
-
-```ts
-Combo.Audio.fromUrl(url: string, options?): Promise<Audio>
-Combo.Audio.fromFile(file: File, options?): Promise<Audio>
-Combo.Audio.fromBlob(blob: Blob, options?): Promise<Audio>
-```
-
-### Properties
-
-```ts
-audioTrack.duration: number
-audioTrack.volume: number
-audioTrack.muted: boolean
-audioTrack.playbackRate: number
-audioTrack.loop: boolean
-audioTrack.currentTime: number
-audioTrack.isPlaying: boolean
-audioTrack.fadeIn: number
-audioTrack.fadeOut: number
-audioTrack.trim: { start: number; end: number }
-```
-
-### Methods
-
-```ts
-audioTrack.play(): void
-audioTrack.pause(): void
-audioTrack.stop(): void
-audioTrack.seek(time: number): void
-audioTrack.setVolume(volume: number): void
-audioTrack.mute(): void
-audioTrack.unmute(): void
-```
-
-## Utility Functions
-
-```ts
-// Version and support
-Combo.version: string
-Combo.isSupported(): boolean
-
-// Time conversion
-Combo.framesToTime(frames: number, fps: number): number
-Combo.timeToFrames(ms: number, fps: number): number
-```
-
-```ts
-import { 
-  Studio, 
-  Video, 
-  Image, 
-  Text, 
-  Audio
-} from "@designcombo/video";
-
-// Use imported types directly
-let studio: Studio;
-let clip: Video;
-```
+- `compositor.addClip(clip: IClip)`: Add a clip for composing.
+- `compositor.output()`: Returns a `ReadableStream` of the rendered video.

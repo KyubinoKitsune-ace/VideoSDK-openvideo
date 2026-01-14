@@ -24,7 +24,32 @@ studio.setPreviewQuality("high"); // "low", "medium", "high"
 studio.setPreviewFPS(30); // Lower FPS for smoother preview
 ```
 
-## Export to Video
+## Export to Video (Compositor)
+
+For high-performance server-side or worker-side exports, use the `Compositor`.
+
+```ts
+import { Compositor } from "@designcombo/video";
+
+const compositor = new Compositor({
+  width: 1920,
+  height: 1080,
+  fps: 30,
+});
+
+// Add clips to compositor
+const textTrackId = "text-layer";
+const bgTrackId = "bg-layer";
+
+const bgClip = await Video.fromUrl("bg.mp4");
+await studio.addClip(bgClip, bgTrackId);
+
+const textClip = new Text("Overlay", {});
+await studio.addClip(textClip, textTrackId);
+
+// Get output stream
+const outputStream = await compositor.output();
+```
 
 ### Basic Export
 
@@ -234,31 +259,24 @@ await studio.export({
 
 Track rendering progress:
 
+### `playback:frame`
+
+Emitted on every frame update during playback.
+
 ```ts
-studio.on("renderStart", () => {
-  console.log("Rendering started");
-  showProgressBar();
+studio.on("playback:frame", ({ frame, time }) => {
+  console.log("Current frame:", frame);
+  console.log("Current time (μs):", time);
 });
+```
 
-studio.on("renderProgress", ({ frame, totalFrames, percent }) => {
-  console.log(`Frame ${frame}/${totalFrames} (${percent}%)`);
-  updateProgressBar(percent);
-});
+### `playback:status`
 
-studio.on("renderComplete", (blob) => {
-  console.log("Rendering complete!");
-  hideProgressBar();
-  download(blob);
-});
+Emitted when playback status changes.
 
-studio.on("renderError", (error) => {
-  console.error("Rendering failed:", error);
-  showError(error.message);
-});
-
-studio.on("renderCancel", () => {
-  console.log("Rendering cancelled");
-  hideProgressBar();
+```ts
+studio.on("playback:status", ({ status, frame, time }) => {
+  console.log("Status:", status); // "playing", "paused", "stopped"
 });
 ```
 

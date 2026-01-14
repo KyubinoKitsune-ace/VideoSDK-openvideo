@@ -12,14 +12,14 @@ Transitions create smooth visual effects between two consecutive clips on the ti
 });
 
 // Load clips asynchronously
-const imageClip = await Combo.Image.fromUrl("photo1.jpg", {
+const imageClip = await Image.fromUrl("photo1.jpg", {
   x: 0,
   y: 0,
   width: 1920,
   height: 1080,
 });
 
-const videoClip = await Combo.Video.fromUrl("clip1.mp4", {
+const videoClip = await Video.fromUrl("clip1.mp4", {
   x: 0,
   y: 0,
   width: 1920,
@@ -79,8 +79,8 @@ studio.addTransition(clip1, clip2, {
 Simple cross-fade between clips:
 
 ```ts
-const videoClip1 = await Combo.Video.fromUrl("clip1.mp4");
-const videoClip2 = await Combo.Video.fromUrl("clip2.mp4");
+const videoClip1 = await Video.fromUrl("clip1.mp4");
+const videoClip2 = await Video.fromUrl("clip2.mp4");
 
 videoClip1.set({ display: { from: 0, to: 300 } });
 videoClip2.set({ display: { from: 300, to: 600 } });
@@ -168,25 +168,26 @@ Transitions work between any combination of video clips and image clips:
 ```ts
 // Load all clips asynchronously
 const [imageClip1, videoClip, imageClip2] = await Promise.all([
-  Combo.Image.fromUrl("photo1.jpg", {
-    x: 0,
-    y: 0,
-    width: 1920,
-    height: 1080,
-  }),
-  Combo.Video.fromUrl("clip1.mp4", {
-    x: 0,
-    y: 0,
-    width: 1920,
-    height: 1080,
-  }),
-  Combo.Image.fromUrl("photo2.jpg", {
-    x: 0,
-    y: 0,
-    width: 1920,
-    height: 1080,
-  }),
+  Image.fromUrl("photo1.jpg"),
+  Video.fromUrl("clip1.mp4"),
+  Image.fromUrl("photo2.jpg"),
 ]);
+
+imageClip1.left = 0;
+imageClip1.top = 0;
+imageClip1.width = 1920;
+imageClip1.height = 1080;
+
+videoClip.left = 0;
+videoClip.top = 0;
+videoClip.width = 1920;
+videoClip.height = 1080;
+
+imageClip2.left = 0;
+imageClip2.top = 0;
+imageClip2.width = 1920;
+imageClip2.height = 1080;
+
 
 // Set timeline positions
 imageClip1.set({ display: { from: 0, to: 150 } });
@@ -269,9 +270,9 @@ Create a sequence with multiple transitions:
 ```ts
 // Load all video clips in parallel
 const [videoClip1, videoClip2, videoClip3] = await Promise.all([
-  Combo.Video.fromUrl("clip1.mp4"),
-  Combo.Video.fromUrl("clip2.mp4"),
-  Combo.Video.fromUrl("clip3.mp4"),
+  Video.fromUrl("clip1.mp4"),
+  Video.fromUrl("clip2.mp4"),
+  Video.fromUrl("clip3.mp4"),
 ]);
 
 // Position clips consecutively
@@ -302,8 +303,8 @@ studio.addTransition(videoClip2, videoClip3, {
 You can modify transition properties after creation:
 
 ```ts
-const videoClip1 = await Combo.Video.fromUrl("clip1.mp4");
-const videoClip2 = await Combo.Video.fromUrl("clip2.mp4");
+const videoClip1 = await Video.fromUrl("clip1.mp4");
+const videoClip2 = await Video.fromUrl("clip2.mp4");
 
 // Add transition
 const transition = studio.addTransition(videoClip1, videoClip2, {
@@ -332,8 +333,8 @@ scene.removeTransitionBetween(videoClip1, videoClip2);
 ### Accessing Transition Properties
 
 ```ts
-const videoClip1 = await Combo.Video.fromUrl("clip1.mp4");
-const videoClip2 = await Combo.Video.fromUrl("clip2.mp4");
+const videoClip1 = await Video.fromUrl("clip1.mp4");
+const videoClip2 = await Video.fromUrl("clip2.mp4");
 
 const transition = studio.addTransition(videoClip1, videoClip2, {
   type: "fade",
@@ -356,10 +357,10 @@ Use preset transition styles for quick setup:
 ```ts
 // Load video clips
 const [videoClip1, videoClip2, videoClip3, videoClip4] = await Promise.all([
-  Combo.Video.fromUrl("clip1.mp4"),
-  Combo.Video.fromUrl("clip2.mp4"),
-  Combo.Video.fromUrl("clip3.mp4"),
-  Combo.Video.fromUrl("clip4.mp4"),
+  Video.fromUrl("clip1.mp4"),
+  Video.fromUrl("clip2.mp4"),
+  Video.fromUrl("clip3.mp4"),
+  Video.fromUrl("clip4.mp4"),
 ]);
 
 // Add clips to studio
@@ -406,8 +407,8 @@ studio.addTransition(videoClip3, videoClip4, {
 The SDK will validate transitions and throw errors if:
 
 ```ts
-const imageClip = await Combo.Image.fromUrl("photo1.jpg");
-const videoClip = await Combo.Video.fromUrl("clip1.mp4");
+const imageClip = await Image.fromUrl("photo1.jpg");
+const videoClip = await Video.fromUrl("clip1.mp4");
 
 // ❌ Clips are not consecutive
 imageClip.set({ display: { from: 0, to: 100 } });

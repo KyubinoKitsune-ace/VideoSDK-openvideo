@@ -5,29 +5,29 @@ Animations allow you to create dynamic effects by changing clip properties over 
 ## Basic Animation
 
 ```ts
-import * as Combo from "@designcombo/video";
+import { Studio, Text } from "@designcombo/video";
 
-const studio = new Combo.Studio({
+const studio = new Studio({
   width: 1920,
   height: 1080,
   fps: 30,
-  bgColor: "#000000",
-  canvas: document.getElementById('canvas'),
 });
 
-const text = new Combo.Text("Hello World", {
+const text = new Text("Hello World", {
   fontSize: 48,
-  fontFamily: "Ubuntu",
 });
-text.set({ x: 0, y: 540 });
+text.left = 0;
+text.top = 540;
 
-// Animate text position from left to right
-text.animate({
-  property: "x",
-  fromValue: 0,
-  toValue: 1920,
-  startFrame: 0, // start at frame 0
-  duration: 90, // animate for 90 frames (3 seconds at 30fps)
+// Animate text position from left to right using setAnimation
+// Keyframes are percentages (0-100)
+// Duration is in microseconds
+text.setAnimation({
+  '0%': { left: 0 },
+  '100%': { left: 1920 },
+}, { 
+  duration: 3e6, // 3 seconds 
+  iterCount: 1 
 });
 
 await studio.addClip(text);
@@ -37,56 +37,23 @@ await studio.addClip(text);
 
 ### Supported Properties
 
-You can animate any numeric property:
+You can animate the following properties:
 
-- **Position**: `x`, `y`
-- **Size**: `width`, `height`, `scale`, `scaleX`, `scaleY`
-- **Rotation**: `rotation`
+- **Position**: `left`, `top`
+- **Size**: `width`, `height`
+- **Rotation**: `angle`
 - **Opacity**: `opacity`
-- **Text**: `fontSize`, `letterSpacing`, `lineHeight`
-- **Effects**: `blur`, `brightness`, `contrast`, `saturation`
+- **Style**: Any numeric property within the `style` object (if supported by the clip type)
 
-## Multiple Animations
-
-Apply multiple animations to the same clip:
+## Multiple Property Animation
 
 ```ts
-const imageClip = await Combo.Image.fromUrl("photo.jpg");
-imageClip.set({
-  x: 960,
-  y: 540,
-  width: 400,
-  height: 300,
+imageClip.setAnimation({
+  '0%': { opacity: 0, width: 200, height: 150 },
+  '100%': { opacity: 1, width: 400, height: 300 },
+}, { 
+  duration: 2e6 
 });
-
-// Fade in
-imageClip.animate({
-  property: "opacity",
-  fromValue: 0,
-  toValue: 1,
-  startFrame: 0,
-  duration: 30,
-});
-
-// Scale up
-imageClip.animate({
-  property: "scale",
-  fromValue: 0.5,
-  toValue: 1,
-  startFrame: 0,
-  duration: 60,
-});
-
-// Rotate
-imageClip.animate({
-  property: "rotation",
-  fromValue: 0,
-  toValue: 360,
-  startFrame: 60,
-  duration: 90,
-});
-
-await studio.addClip(imageClip);
 ```
 
 ## Easing Functions
@@ -138,7 +105,7 @@ text.animate({
 Animate multiple properties with synchronized keyframes:
 
 ```ts
-const imageClip = await Combo.Image.fromUrl("photo.jpg");
+const imageClip = await Image.fromUrl("photo.jpg");
 
 // Animate position with keyframes
 imageClip.animate({
@@ -178,7 +145,7 @@ imageClip.animate({
 Create complex motion paths with keyframes:
 
 ```ts
-const element = new Combo.Text("Follow the path");
+const element = new Text("Follow the path");
 
 // Horizontal movement
 element.animate({
@@ -317,33 +284,33 @@ text.animate("bounceIn", {
 Create complex animations by combining presets:
 
 ```ts
-const imageClip = await Combo.Image.fromUrl("photo.jpg");
+const imageClip = await Image.fromUrl("photo.jpg");
 
 // Enter with fade and zoom
-imageClip.animate("fadeIn", {
+imageClip.setAnimation("fadeIn", {
   startFrame: 0,
   duration: 30,
 });
 
-imageClip.animate("zoomIn", {
+imageClip.setAnimation("zoomIn", {
   startFrame: 0,
   duration: 30,
 });
 
 // Attention effect in the middle
-imageClip.animate("pulse", {
+imageClip.setAnimation("pulse", {
   startFrame: 100,
   duration: 60,
   loop: 3,
 });
 
 // Exit with slide and fade
-imageClip.animate("slideOutRight", {
+imageClip.setAnimation("slideOutRight", {
   startFrame: 250,
   duration: 45,
 });
 
-imageClip.animate("fadeOut", {
+imageClip.setAnimation("fadeOut", {
   startFrame: 250,
   duration: 45,
 });

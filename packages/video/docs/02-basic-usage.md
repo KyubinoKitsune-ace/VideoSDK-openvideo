@@ -12,108 +12,112 @@ const studio = new Studio({
   bgColor: "#ffffff",
   canvas: document.getElementById("canvas") as HTMLCanvasElement,
 });
+
+await studio.ready;
 ```
 
 ## Adding Clips
 
 ### Adding Image Clips
 ```ts
+import { Image } from "@designcombo/video";
+
 // Load image clip asynchronously
-const imageClip = await Combo.Image.fromUrl("photo.jpg", {
-  x: 100,
-  y: 100,
-  width: 800,
-  height: 600,
-});
+const imageClip = await Image.fromUrl("photo.jpg");
 
-// Set timeline position (in frames)
-imageClip.set({
-  display: {
-    from: 0, // frames
-    to: 150, // frames (5 seconds at 30fps)
-  },
-});
+imageClip.left = 100;
+imageClip.top = 100;
+imageClip.width = 800;
+imageClip.height = 600;
 
-studio.add(imageClip);
+// Set timeline position (in microseconds)
+// 0 to 5 seconds
+imageClip.display = {
+  from: 0,
+  to: 5e6,
+};
+
+studio.addClip(imageClip);
 ```
 
 ### Adding Video Clips
 
 ```ts
+import { Video } from "@designcombo/video";
+
 // Load video clip asynchronously
-const videoClip = await Combo.Video.fromUrl("clip.mp4", {
-  x: 0,
-  y: 0,
-  width: 1920,
-  height: 1080,
-});
+const videoClip = await Video.fromUrl("clip.mp4");
 
-// Set timeline position
-videoClip.set({
-  display: {
-    from: 150, // frames
-    to: 450, // frames (10 seconds at 30fps)
-  },
-});
+videoClip.left = 0;
+videoClip.top = 0;
+videoClip.width = 1920;
+videoClip.height = 1080;
 
-studio.add(videoClip);
+// Set timeline position (microseconds)
+// 5 to 15 seconds
+videoClip.display = {
+  from: 5e6,
+  to: 15e6,
+};
+
+studio.addClip(videoClip);
 ```
 
 ### Adding Text Clips
 
 ```ts
-const textClip = new Combo.Text("Hello World", {
+import { Text } from "@designcombo/video";
+
+const textClip = new Text("Hello World", {
   fontSize: 48,
   fontFamily: "Ubuntu",
-  x: 960,
-  y: 540,
-  color: "#ffffff",
+  fill: "#ffffff",
 });
 
-// Set timeline position
-textClip.set({
-  display: {
-    from: 0, // frames
-    to: 500, // frames
-  },
-});
+textClip.left = 960;
+textClip.top = 540;
 
-// Update text properties
-textClip.set({
-  fontSize: 64,
-  color: "red",
-  fontWeight: "bold",
-});
+// Set timeline position (microseconds)
+textClip.display = {
+  from: 0,
+  to: 10e6,
+};
 
-studio.add(textClip);
+studio.addClip(textClip);
 ```
 
 ## Loading Multiple Clips in Parallel
 
 ```ts
+import { Image, Video } from "@designcombo/video";
+
 // Efficient parallel loading
 const [imageClip1, imageClip2, videoClip] = await Promise.all([
-  Combo.Image.fromUrl("photo1.jpg"),
-  Combo.Image.fromUrl("photo2.jpg"),
-  Combo.Video.fromUrl("clip1.mp4"),
+  Image.fromUrl("photo1.jpg"),
+  Image.fromUrl("photo2.jpg"),
+  Video.fromUrl("clip1.mp4"),
 ]);
 
-// Set timeline positions
-imageClip1.set({ display: { from: 0, to: 150 } });
-imageClip2.set({ display: { from: 150, to: 300 } });
-videoClip.set({ display: { from: 300, to: 600 } });
+// Set timeline positions (microseconds)
+imageClip1.display = { from: 0, to: 5e6 };
+imageClip2.display = { from: 5e6, to: 10e6 };
+videoClip.display = { from: 10e6, to: 20e6 };
 
-studio.add(imageClip1, imageClip2, videoClip);
+studio.addClip(imageClip1);
+studio.addClip(imageClip2);
+studio.addClip(videoClip);
 ```
 
 ## Handling Loading States
 
 ```ts
+import { Video, Log } from "@designcombo/video";
+
 try {
-  const videoClip = await Combo.Video.fromUrl("clip.mp4");
-  studio.add(videoClip);
+  const videoClip = await Video.fromUrl("clip.mp4");
+  studio.addClip(videoClip);
   console.log("Video clip loaded successfully");
 } catch (error) {
-  console.error("Failed to load video clip:", error);
+  Log.error("Failed to load video clip:", error);
 }
 ```

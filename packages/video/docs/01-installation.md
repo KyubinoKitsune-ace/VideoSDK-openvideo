@@ -40,22 +40,25 @@ DesignCombo requires modern browsers with support for:
 ## Quick Start
 
 ```ts
-import * as Combo from "designcombo";
+import { Studio, Video } from "@designcombo/video";
 
-const studio = new Combo.Studio({
+const studio = new Studio({
   width: 1920,
   height: 1080,
   fps: 30,
   bgColor: "#000000",
-  canvas: document.getElementById("canvas-container"), // Optional
+  canvas: document.getElementById("canvas") as HTMLCanvasElement, // Optional
 });
 
 // Load a video clip
-const videoClip = await Combo.Video.fromUrl("video.mp4");
-videoClip.set({ display: { from: 0, to: 300 } });
+const videoClip = await Video.fromUrl("video.mp4");
+
+// Set display range (in microseconds)
+// 0 to 5 seconds
+videoClip.set({ display: { from: 0, to: 5e6 } });
 
 // Add to studio
-studio.add(videoClip);
+studio.addClip(videoClip);
 
 // Play preview
 studio.play();
@@ -63,12 +66,18 @@ studio.play();
 
 ## TypeScript
 
-DesignCombo is written in TypeScript and includes full type definitions:
+DesignCombo includes full type definitions:
 
 ```ts
-import * as Combo from "designcombo";
+import { Studio, type IStudioOpts } from "@designcombo/video";
 
-const studio: Combo.Studio = new Combo.Studio("el", { settings: {...} });
+const opts: IStudioOpts = {
+  width: 1920,
+  height: 1080,
+  fps: 30
+};
+
+const studio = new Studio(opts);
 ```
 
 ## CDN (Browser)
@@ -77,14 +86,13 @@ For quick prototyping, use the CDN version:
 
 ```html
 <script type="module">
-  import * as Combo from "https://cdn.jsdelivr.net/npm/designcombo/+esm";
+  import { Studio } from "https://cdn.jsdelivr.net/npm/@designcombo/video/+esm";
 
-  const studio = new Combo.Studio("canvas-container", {
-    settings: {
-      width: 1920,
-      height: 1080,
-      fps: 30,
-    },
+  const studio = new Studio({
+    width: 1920,
+    height: 1080,
+    fps: 30,
+    canvas: document.getElementById('my-canvas')
   });
 </script>
 ```
@@ -92,18 +100,16 @@ For quick prototyping, use the CDN version:
 ## Verifying Installation
 
 ```ts
-import * as Combo from "designcombo";
+import { Compositor } from "@designcombo/video";
 
-console.log(Combo.version); // Check version
+// Check environment capabilities
+const result = await Compositor.isSupported();
 
-// Check browser capabilities
-const support = Combo.checkSupport();
-console.log(support.webcodecs); // WebCodecs support
-console.log(support.webgl); // WebGL support
-console.log(support.workers); // Web Workers support
-
-// Quick check - returns true if all required features supported
-console.log(Combo.isSupported());
+if (result) {
+  console.log("Environment is supported");
+} else {
+  console.error("Video processing not supported in this environment");
+}
 ```
 
 ## System Requirements
