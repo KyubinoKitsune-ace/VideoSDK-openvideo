@@ -512,15 +512,6 @@ export class Studio extends EventEmitter<StudioEvents> {
     );
   }
 
-  /**
-   * Add a Media clip (Video/Image) to the main track with ripple effect
-   */
-  /**
-   * Add a Media clip (Video/Image) to the main track with ripple effect
-   */
-  async addMedia(clip: Video | Image | Text): Promise<void> {
-    return this.timeline.addMedia(clip);
-  }
 
   async addTransition(
     transitionKey: string,

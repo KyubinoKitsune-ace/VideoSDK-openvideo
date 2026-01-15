@@ -1,8 +1,6 @@
 import { Texture, Sprite } from 'pixi.js';
 import type { Studio, StudioTrack } from '../studio';
 import type { IClip, IPlaybackCapable } from '../clips/iclip';
-import { Video } from '../clips/video-clip';
-import { Image } from '../clips/image-clip';
 import { Text } from '../clips/text-clip';
 import { Transition } from '../clips/transition-clip';
 import { PixiSpriteRenderer } from '../sprite/pixi-sprite-renderer';
@@ -75,63 +73,6 @@ export class TimelineModel {
     this.studio.emit('track:removed', { trackId });
   }
 
-  /**
-   * Add a Media clip (Video/Image) to the main track with ripple effect
-   */
-  async addMedia(clip: Video | Image | Text): Promise<void> {
-    if (this.studio.destroyed) return;
-
-    // 1. Scale and Center
-    const width = this.studio.opts.width;
-    const height = this.studio.opts.height;
-    if (width && height) {
-      if (typeof (clip as any).scaleToFit === 'function') {
-        await (clip as any).scaleToFit(width, height);
-      }
-      if (typeof (clip as any).centerInScene === 'function') {
-        (clip as any).centerInScene(width, height);
-      }
-    }
-
-    // 2. Determine Duration
-    const duration = clip.duration > 0 ? clip.duration : 5000000; // 5s default
-    if (clip.duration <= 0) clip.duration = duration;
-
-    // 3. Find Track
-    // Filter for common media types
-    const candidateTracks = this.tracks.filter((t) =>
-      ['media', 'video', 'image', 'Video', 'Image'].includes(t.type)
-    );
-    const mediaTrack =
-      candidateTracks.find((t) => t.clipIds.length > 0) || candidateTracks[0];
-
-    let trackId: string | undefined;
-
-    if (mediaTrack) {
-      trackId = mediaTrack.id;
-      // Ripple logic: Shift all existing clips by duration
-      const shiftAmount = duration;
-      for (const id of mediaTrack.clipIds) {
-        const existingClip = this.getClipById(id);
-        if (existingClip) {
-          const newFrom = existingClip.display.from + shiftAmount;
-          const newTo = existingClip.display.to + shiftAmount;
-          await this.updateClip(id, {
-            display: { from: newFrom, to: newTo },
-          });
-        }
-      }
-    }
-    // 4. Set new clip timing
-    clip.display.from = 0;
-    clip.display.to = duration;
-
-    // 5. Add Clip
-    await this.addClip(clip, { trackId });
-
-    // 6. Explicitly seek to the beginning to update the display
-    await this.studio.seek(0);
-  }
 
   /**
    * Add a Transition clip at the join where the selected clip starts.

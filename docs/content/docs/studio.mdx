@@ -71,6 +71,29 @@ Remove clips from the studio:
 studio.removeClip(image.id);
 ```
 
+### updateClip() / updateClips()
+
+Update clip properties. `updateClips` is preferred for batch updates to avoid multiple re-renders.
+
+```ts
+// Update single clip
+await studio.updateClip(clip.id, { left: 100, opacity: 0.5 });
+
+// Batch update multiple clips
+await studio.updateClips([
+  { id: clip1.id, updates: { left: 100 } },
+  { id: clip2.id, updates: { angle: 45 } }
+]);
+```
+
+### addTransition()
+
+Adds a transition between two clips.
+
+```ts
+await studio.addTransition("fade", 2000000, fromClipId, toClipId);
+```
+
 ## Selection Management
 
 ### selectedClips
@@ -110,6 +133,44 @@ studio.on('currentTime', ({ currentTime }) => {
   // currentTime is in microseconds
   console.log('Current time:', currentTime);
 });
+```
+
+## Selection Operations
+
+The Studio provides methods to perform operations on the currently selected clips.
+
+### deleteSelected()
+
+Removes all selected clips.
+
+```ts
+await studio.deleteSelected();
+```
+
+### duplicateSelected()
+
+Duplicates all selected clips.
+
+```ts
+await studio.duplicateSelected();
+```
+
+### splitSelected()
+
+Splits all selected clips at the current time (or a specified time).
+
+```ts
+await studio.splitSelected();
+// or
+await studio.splitSelected(5000000); // Split at 5s
+```
+
+### trimSelected()
+
+Trims the selected clips.
+
+```ts
+await studio.trimSelected(2000000); // Trim 2s
 ```
 
 ## Artboard

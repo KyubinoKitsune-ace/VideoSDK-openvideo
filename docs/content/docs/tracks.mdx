@@ -31,14 +31,20 @@ When you add a clip without a `trackId`, the Studio may create a new track for i
 ### Explicit Assignment
 
 ```ts
-const textTrackId = "text-layer";
-const bgTrackId = "bg-layer";
-
-const bgClip = await Video.fromUrl("bg.mp4");
-await studio.addClip(bgClip, { trackId: bgTrackId });
-
 const textClip = new Text("Overlay", {});
 await studio.addClip(textClip, { trackId: textTrackId });
+```
+
+### Explicit Management
+
+You can also explicitly add or remove tracks.
+
+```ts
+// Add a new track
+const newTrack = studio.addTrack({ name: "Overlay Track", type: "text" });
+
+// Remove a track and all its clips
+await studio.removeTrack(trackId);
 ```
 
 ## Layering Control
