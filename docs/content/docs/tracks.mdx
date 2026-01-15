@@ -1,4 +1,7 @@
-# Tracks
+---
+title: Tracks
+description: Organize and layer clips in your composition.
+---
 
 Tracks serve as an organizational layer in DesignCombo. They define the layering (z-index) of clips.
 
@@ -23,7 +26,7 @@ await studio.addClip(clip, { trackId: "my-custom-track" });
 
 ### Implicit Creation
 
-When you add a clip without a `trackId`, the Studio may create a new track for it or add it to an existing suitable track depending on logic (see `addClip` implementation).
+When you add a clip without a `trackId`, the Studio may create a new track for it or add it to an existing suitable track depending on logic.
 
 ### Explicit Assignment
 
@@ -41,4 +44,3 @@ await studio.addClip(textClip, { trackId: textTrackId });
 ## Layering Control
 
 To control which clips render on top, manage the order of tracks in the Studio.
-(Future API might allow explicit reordering of tracks).

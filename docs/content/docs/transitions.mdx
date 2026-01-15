@@ -1,0 +1,51 @@
+---
+title: Transitions
+description: Smooth visual effects between consecutive clips.
+---
+
+Transitions create smooth visual effects between two consecutive clips on the timeline. They are applied at the boundary where one clip ends and another begins.
+
+## Basic Transition
+
+```ts
+import { Studio, Video, Transition } from "@designcombo/video";
+
+const studio = new Studio({
+    width: 1920,
+    height: 1080,
+    fps: 30,
+});
+
+const video1 = await Video.fromUrl("clip1.mp4");
+const video2 = await Video.fromUrl("clip2.mp4");
+
+// Add clips and a transition between them
+await studio.addClip(video1);
+await studio.addClip(video2);
+
+// Add transition from video1 to video2
+studio.addTransition({
+  from: video1.id,
+  to: video2.id,
+  type: "fade",
+  duration: 1e6, // 1 second in microseconds
+});
+```
+
+## Transition Types
+
+### Fade
+Simple cross-fade between clips.
+
+### Slide
+Slide the new clip in from a specified direction (`left`, `right`, `top`, `bottom`).
+
+### Zoom
+Scale-based transition between clips.
+
+### Blur
+Blur the outgoing clip while focusing the incoming clip.
+
+## Overlap Management
+
+DesignCombo automatically handles the visual overlap during the transition. The software ensures that both clips are active and rendered during the transition duration.

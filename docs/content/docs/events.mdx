@@ -1,4 +1,7 @@
-# Events
+---
+title: Events
+description: Listen to studio events and user interactions.
+---
 
 The `@designcombo/video` SDK provides a robust event system across the `Studio`, `Compositor`, and individual `Clip` instances. This allows you to build responsive UIs that react to playback, selection, and composition changes.
 
@@ -42,7 +45,7 @@ studio.on("selection:created", ({ selected }) => {
 ```
 
 #### `selection:updated`
-Emitted when the current selection changes (e.g., adding a clip to an existing selection).
+Emitted when the current selection changes.
 
 ```ts
 studio.on("selection:updated", ({ selected }) => {
@@ -86,24 +89,12 @@ studio.on("clip:updated", ({ clip }) => {
 #### `track:added` / `track:removed`
 Emitted when tracks are modified.
 
-```ts
-studio.on("track:added", ({ track }) => {
-  console.log("New track added:", track.id);
-});
-```
-
 #### `reset`
 Emitted when the studio state is completely reset.
 
-```ts
-studio.on("reset", () => {
-  console.log("Studio reset");
-});
-```
-
 ## Clip Events
 
-Individual clips emit events for property changes. This is particularly useful for syncing properties panels or other reactive UI elements.
+Individual clips emit events for property changes. This is particularly useful for syncing properties panels.
 
 ### `propsChange`
 Emitted when any property of the clip (like `left`, `top`, `width`, `height`, `angle`, `opacity`, etc.) is changed.
@@ -111,13 +102,12 @@ Emitted when any property of the clip (like `left`, `top`, `width`, `height`, `a
 ```ts
 clip.on("propsChange", (changes) => {
   console.log("Modified properties:", changes);
-  // Example: { left: 100, top: 200 }
 });
 ```
 
 ## Compositor Events
 
-The `Compositor` is used for high-performance rendering and exports. It emits progress events during the rendering process.
+The `Compositor` is used for high-performance rendering and exports.
 
 ### `OutputProgress`
 Emitted during the rendering/export process.
@@ -131,18 +121,12 @@ compositor.on("OutputProgress", (progress) => {
 ## Best Practices
 
 ### Cleanup
-Always remove event listeners when they are no longer needed (e.g., when a component unmounts) to avoid memory leaks.
+Always remove event listeners when they are no longer needed (e.g., when a component unmounts).
 
 ```ts
-const handleTime = ({ currentTime }) => {
-  // ...
-};
-
+const handleTime = ({ currentTime }) => { /* ... */ };
 studio.on("currentTime", handleTime);
 
 // Later...
 studio.off("currentTime", handleTime);
 ```
-
-### Lightweight Handlers
-Keep your event handlers lightweight. For expensive operations (like complex UI updates on every `currentTime` tick), consider throttling or using `requestAnimationFrame`.

@@ -1,0 +1,241 @@
+---
+title: Clips
+description: Building blocks of video compositions.
+---
+
+Clips are the building blocks of your video composition. DesignCombo supports several types of clips: Video, Image, Text, Audio, and Captions.
+
+## Video Clips
+
+### Loading Video Clips
+
+```ts
+import { Video } from "@designcombo/video";
+
+// Load from URL
+const videoClip = await Video.fromUrl("video.mp4");
+
+// For Compositor (Worker/Server), you can also pass a ReadableStream
+// const videoClip = new Video(stream);
+```
+
+### Video Properties
+
+```ts
+videoClip.left = 100;     // X position
+videoClip.top = 200;      // Y position
+videoClip.width = 800;
+videoClip.height = 600;
+videoClip.angle = 45;     // Rotation in degrees
+videoClip.opacity = 0.8;
+videoClip.volume = 0.5;   // 0.0 to 1.0
+```
+
+### Video Methods
+
+```ts
+// Seek to a specific internal time (microseconds)
+await videoClip.seek(2000000); // 2 seconds
+
+// Set playback rate
+videoClip.playbackRate = 1.5;
+```
+
+## Image Clips
+
+### Loading Image Clips
+
+```ts
+import { Image } from "@designcombo/video";
+
+const imageClip = await Image.fromUrl("photo.jpg");
+```
+
+### Image Transformations
+
+```ts
+imageClip.set({
+  left: 0,
+  top: 0,
+  width: 1920,
+  height: 1080
+});
+```
+
+## Text Clips
+
+### Creating Text Clips
+
+```ts
+import { Text } from "@designcombo/video";
+
+const textClip = new Text("Hello DesignCombo", {
+  fontSize: 72,
+  fontFamily: "Inter",
+  fill: "#ffffff",
+  fontWeight: "bold",
+  textAlign: "center"
+});
+```
+
+### Text Properties
+
+```ts
+textClip.text = "Updated Text";
+textClip.style.fill = "#ff0000";
+textClip.style.fontSize = 96;
+```
+
+### Text Styling
+
+DesignCombo supports standard PixiJS text styling options, including:
+- `fontFamily`, `fontSize`, `fontWeight`
+- `fill` (color)
+- `stroke`, `strokeThickness`
+- `dropShadow`
+- `letterSpacing`, `lineHeight`
+
+## Audio Clips
+
+DesignCombo provides audio support for video clips and standalone audio tracks.
+
+### Standalone Audio
+
+You can use `Audio` clips for background music, sound effects, and voiceovers.
+
+```ts
+import { Audio } from "@designcombo/video";
+
+// Load audio track asynchronously
+const audioTrack = await Audio.fromUrl("music.mp3");
+
+// Position on timeline (in microseconds)
+audioTrack.display = {
+  from: 0,
+  to: 30e6, // 30 seconds
+};
+
+// Control volume (0.0 to 1.0)
+audioTrack.volume = 0.5;
+
+studio.addClip(audioTrack);
+```
+
+### Audio in Video Clips
+
+Video clips also expose a `volume` property:
+
+```ts
+const videoClip = await Video.fromUrl("video.mp4");
+videoClip.volume = 0.8;
+```
+
+### Management
+
+Like all clips, you can trim audio using the `trim` property:
+
+```ts
+audioTrack.trim = {
+  from: 5e6, // start 5 seconds in
+  to: 15e6,  // end at 15 seconds
+};
+```
+
+## Common Clip Operations
+
+### Positioning
+
+All clips use a coordinate system where (0,0) is the top-left of the artboard.
+
+```ts
+clip.left = 500;
+clip.top = 300;
+```
+
+### Sizing
+
+```ts
+clip.width = 1000;
+clip.height = 500;
+```
+
+### Rotation
+
+Rotation is defined in degrees.
+
+```ts
+clip.angle = 90; // Rotate 90 degrees clockwise
+```
+
+### Opacity
+
+Value between 0.0 and 1.0.
+
+```ts
+clip.opacity = 0.5;
+```
+
+### Layering (Z-Index)
+
+The rendering order is determined by the track order and the clip's position within its track. Clips added later to a track appear on top of earlier ones.
+
+### Visibility
+
+```ts
+// Temporarily hide a clip
+// Note: Hidden clips are still processed but not rendered
+clip.visible = false;
+```
+
+## Clip Events
+
+Clips emit events when their properties change:
+
+```ts
+clip.on("propsChange", (changes) => {
+  console.log("Changed properties:", changes);
+});
+```
+
+## Cloning Clips
+
+Create an exact copy of a clip with all properties:
+
+```ts
+const clonedClip = await clip.clone();
+studio.addClip(clonedClip);
+```
+
+## Removing Clips
+
+```ts
+studio.removeClip(clip.id);
+```
+
+## Advanced: Custom Clips with PixiJS
+
+You can extend `BaseClip` to create custom rendering logic using PixiJS.
+
+### Custom Clip
+
+```ts
+import { BaseClip } from "@designcombo/video";
+
+class CustomLogoClip extends BaseClip {
+  // Implementation details...
+}
+```
+
+### Custom Sprite Clip
+
+```ts
+import { CustomSpriteClip } from "@designcombo/video";
+
+// Handle raw PixiJS sprites
+```
+
+## Best Practices
+
+1. **Wait for ready**: Always `await clip.ready` or the static `fromUrl` method to ensure media metadata is loaded before adding to the studio.
+2. **Microseconds**: Remember all time values (`display`, `trim`) must be in microseconds (seconds * 1,000,000).
+3. **Cleanup**: Clips are automatically cleaned up when the Studio is destroyed, but you can manually call `clip.destroy()` if needed.

@@ -1,0 +1,50 @@
+---
+title: Rendering and Export
+description: Export your compositions to video files.
+---
+
+Learn how to render your composition and export it to video files.
+
+## Preview Rendering
+
+### Play Preview
+
+```ts
+// Start playback
+await studio.play();
+
+// Pause playback
+studio.pause();
+
+// Seek to time (microseconds)
+studio.seek(1500000); // 1.5 seconds
+```
+
+## Compositor Export
+
+For high-performance export, use the `Compositor` class.
+
+```ts
+import { Compositor } from "@designcombo/video";
+
+const compositor = new Compositor({
+  width: 1920,
+  height: 1080,
+  fps: 30,
+});
+
+// Load clips (similar to Studio)
+await compositor.loadFromJSON(projectData);
+
+// Output readable stream
+const outputStream = await compositor.output();
+```
+
+## Export Settings
+
+When exporting, you can specify various parameters:
+
+- **Format**: `mp4`, `webm`, `gif`
+- **Bitrate**: Video and Audio bitrate in kbps
+- **Resolution**: Output width and height
+- **FPS**: Output frame rate

@@ -1,0 +1,23 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "---Getting Started---",
+    "installation",
+    "basic-usage",
+    "---Core Concepts---",
+    "studio",
+    "tracks",
+    "events",
+    "---Media & Effects---",
+    "clips",
+    "animations",
+    "transitions",
+    "effects",
+    "---Export & Persistence---",
+    "serialization",
+    "rendering",
+    "---Reference---",
+    "api-reference"
+  ]
+}

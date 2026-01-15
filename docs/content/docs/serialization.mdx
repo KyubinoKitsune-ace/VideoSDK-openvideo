@@ -1,0 +1,58 @@
+---
+title: Serialization
+description: Save and restore studio state using JSON.
+---
+
+DesignCombo provides built-in support for serializing the entire studio state into a JSON-serializable object.
+
+## Exporting State
+
+To capture the current state of your project, use the `exportToJSON()` method on the `Studio` instance.
+
+```ts
+import { Studio } from "@designcombo/video";
+
+const studio = new Studio({
+  width: 1920,
+  height: 1080,
+});
+
+// Capture the project state
+const projectData = studio.exportToJSON();
+
+// You can now save this to a database or localStorage
+localStorage.setItem("my-project", JSON.stringify(projectData));
+```
+
+## Loading State
+
+To restore a previously saved project, use the `loadFromJSON()` method.
+
+```ts
+// Retrieve the data
+const savedData = JSON.parse(localStorage.getItem("my-project"));
+
+if (savedData) {
+  // Load into the studio
+  await studio.loadFromJSON(savedData);
+  console.log("Project restored!");
+}
+```
+
+> [!NOTE]
+> `loadFromJSON` will automatically clear the current studio state before restoring the saved project.
+
+## Cloud Rendering
+
+The JSON produced by `studio.exportToJSON()` is directly compatible with the `Compositor`. You can send this JSON to a server-side environment to render the final video.
+
+```ts
+import { Compositor } from "@designcombo/video";
+
+const projectData = studio.exportToJSON();
+
+// On the server/worker:
+const compositor = new Compositor(projectData.settings);
+await compositor.loadFromJSON(projectData);
+const stream = await compositor.output();
+```
