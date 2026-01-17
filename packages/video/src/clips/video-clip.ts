@@ -412,6 +412,8 @@ export class Video extends BaseClip implements IPlaybackCapable {
   }
 
   private thumbAborter = new AbortController();
+  private thumbFinder: VideoFrameFinder | null = null;
+
   /**
    * Generate thumbnails, default generates one 100px width thumbnail per keyframe.
    *
@@ -472,8 +474,15 @@ export class Video extends BaseClip implements IPlaybackCapable {
         const { start = 0, end = this._meta.duration, step } = opts ?? {};
         if (step) {
           let cur = start;
+
+          // Cleanup previous finder if exists
+          if (this.thumbFinder) {
+            await this.thumbFinder.destroy();
+            this.thumbFinder = null;
+          }
+
           // Create a new VideoFrameFinder instance to avoid conflicts with the tick method
-          const videoFrameFinder = new VideoFrameFinder(
+          this.thumbFinder = new VideoFrameFinder(
             await this.localFile.createReader(),
             this.videoSamples,
             {
@@ -481,12 +490,17 @@ export class Video extends BaseClip implements IPlaybackCapable {
               hardwareAcceleration: this.opts.__unsafe_hardwareAcceleration__,
             }
           );
+
           while (cur <= end && !aborterSignal.aborted) {
-            const vf = await videoFrameFinder.find(cur);
+            const vf = await this.thumbFinder.find(cur);
             if (vf) pushPngPromise(vf);
             cur += step;
           }
-          videoFrameFinder.destroy();
+
+          // Cleanup after use
+          await this.thumbFinder.destroy();
+          this.thumbFinder = null;
+
           resolver();
         } else {
           await thumbnailByKeyFrame(
@@ -653,12 +667,29 @@ export class Video extends BaseClip implements IPlaybackCapable {
     return clips;
   }
 
+  /**
+   * Clean up thumbnail generation resources
+   */
+  cleanupThumbnails = async () => {
+    this.thumbAborter.abort();
+    if (this.thumbFinder) {
+      await this.thumbFinder.destroy();
+      this.thumbFinder = null;
+    }
+  };
+
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
     this.logger.info('Video destroy');
     super.destroy();
 
+    // Abort thumbnail generation first
+    this.thumbAborter.abort();
+
+    // Cleanup finders - these are now async but we fire and forget
+    this.thumbFinder?.destroy();
+    this.thumbFinder = null;
     this.videoFrameFinder?.destroy();
     this.audioFrameFinder?.destroy();
   }
@@ -1408,12 +1439,29 @@ class VideoFrameFinder {
     memInfo: memoryUsageInfo(),
   });
 
-  destroy = () => {
-    if (this.decoder?.state !== 'closed') this.decoder?.close();
-    this.decoder = null;
+  destroy = async () => {
     this.curAborter.abort = true;
+
+    // Close video frames first
     this.videoFrames.forEach((f) => f.close());
     this.videoFrames = [];
+
+    // Properly flush and close the decoder
+    if (this.decoder && this.decoder.state !== 'closed') {
+      try {
+        // Wait for pending decode operations to complete or abort
+        await this.decoder.flush();
+      } catch {
+        // Ignore flush errors during cleanup - expected when aborting
+      }
+      try {
+        this.decoder.close();
+      } catch {
+        // Ignore close errors - decoder may already be closed
+      }
+    }
+    this.decoder = null;
+
     this.localFileReader.close();
   };
 }
