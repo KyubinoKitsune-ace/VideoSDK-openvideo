@@ -24,13 +24,12 @@ import { TimelineToolbar } from './timeline-toolbar';
 import { TimelineCanvas } from './timeline';
 import { TimelineStudioSync } from './timeline-studio-sync';
 import { useEditorHotkeys } from '@/hooks/use-editor-hotkeys';
-export function Timeline() {
-  // Timeline shows all tracks (video, audio, effects) and their elements.
-  // You can drag media here to add it to your project.
-  // elements can be trimmed, deleted, and moved.
 
+
+export function Timeline() {
   const { tracks, clips, getTotalDuration } = useTimelineStore();
   const { duration, seek, setDuration } = usePlaybackStore();
+  const { studio } = useStudioStore();
 
   const timelineRef = useRef<HTMLDivElement>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
@@ -244,7 +243,7 @@ export function Timeline() {
         Math.min(
           duration,
           (mouseX + scrollLeft) /
-            (TIMELINE_CONSTANTS.PIXELS_PER_SECOND * zoomLevel)
+          (TIMELINE_CONSTANTS.PIXELS_PER_SECOND * zoomLevel)
         )
       );
 
@@ -333,8 +332,8 @@ export function Timeline() {
       handleWheel({
         ctrlKey: true,
         deltaY: delta,
-        preventDefault: () => {},
-        stopPropagation: () => {},
+        preventDefault: () => { },
+        stopPropagation: () => { },
       } as any);
     });
 
@@ -387,18 +386,18 @@ export function Timeline() {
   }, [zoomLevel, tracks, clips]);
 
   const handleDelete = useCallback(() => {
-    timelineCanvasRef.current?.deleteSelectedClips();
-  }, []);
+    studio?.deleteSelected();
+  }, [studio]);
 
   const handleDuplicate = useCallback(() => {
-    timelineCanvasRef.current?.duplicateSelectedClips();
-  }, []);
+    studio?.duplicateSelected();
+  }, [studio]);
 
   const handleSplit = useCallback(() => {
     // Current time is in seconds in PlaybackStore. Canvas expects microseconds.
     const splitTime = usePlaybackStore.getState().currentTime * 1_000_000;
-    timelineCanvasRef.current?.splitSelectedClip(splitTime);
-  }, []);
+    studio?.splitSelected(splitTime);
+  }, [studio]);
 
   useEditorHotkeys({
     timelineCanvas: timelineCanvasRef.current,
