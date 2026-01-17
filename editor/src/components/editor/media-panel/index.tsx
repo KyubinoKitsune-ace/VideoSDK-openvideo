@@ -71,8 +71,11 @@ export function MediaPanel() {
   }, [activeTab]);
 
   return (
-    <div className="h-full flex">
-      <TabBar />
+    <div className="h-full flex flex-col bg-panel">
+      <div className="flex-none">
+        <TabBar />
+      </div>
+      <Separator orientation="horizontal" />
       <div className="flex-1 overflow-hidden">
         {selectedClips.length > 0 && showProperties ? (
           <PropertiesPanel selectedClips={selectedClips} />

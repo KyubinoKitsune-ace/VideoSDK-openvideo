@@ -41,8 +41,8 @@ export function TabBar() {
   }, []);
 
   return (
-    <div className="flex py-4 px-3 border-r">
-      <div className="flex items-center flex-col gap-2 overflow-x-auto scrollbar-hidden">
+    <div className="flex items-center justify-center py-1.5 px-4">
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hidden">
         {(Object.keys(tabs) as Tab[]).map((tabKey) => {
           const tab = tabs[tabKey];
           const isActive = activeTab === tabKey;
@@ -61,7 +61,7 @@ export function TabBar() {
                 <TooltipTrigger asChild>
                   <tab.icon className="size-5" />
                 </TooltipTrigger>
-                <TooltipContent side="right" align="center" sideOffset={8}>
+                <TooltipContent side="bottom" align="center" sideOffset={8}>
                   {tab.label}
                 </TooltipContent>
               </Tooltip>
