@@ -200,7 +200,11 @@ export class Video extends BaseTimelineClip {
         step: stepUs,
       });
 
-      if (signal.aborted) return;
+      // Check if aborted or canvas destroyed before continuing
+      if (signal.aborted || !this.canvas) {
+        this._isFetchingThumbnails = false;
+        return;
+      }
 
       // Cache thumbnails using the SECOND index as key
       const cacheBatch = thumbnailsArr.map((t, i) => {
@@ -215,12 +219,24 @@ export class Video extends BaseTimelineClip {
       await this.loadThumbnailBatch(cacheBatch);
 
       this._isFetchingThumbnails = false;
-      this.canvas?.requestRenderAll();
-    } catch (error: any) {
-      if (error.message !== 'generate thumbnails aborted') {
-        console.warn('Failed to load thumbnails:', error);
+
+      // Final check before render
+      if (!signal.aborted && this.canvas) {
+        this.canvas.requestRenderAll();
       }
+    } catch (error: any) {
       this._isFetchingThumbnails = false;
+
+      // Ignore expected abort errors
+      if (
+        error?.name === 'AbortError' ||
+        error?.message === 'generate thumbnails aborted' ||
+        error?.message?.includes('aborted')
+      ) {
+        return;
+      }
+
+      console.warn('Failed to load thumbnails:', error);
     }
   }
 
