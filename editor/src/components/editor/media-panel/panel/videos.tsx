@@ -10,7 +10,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { debounce } from 'lodash';
+import { cloneDeep, debounce } from 'lodash';
 
 interface PexelsVideo {
   id: number;
@@ -116,7 +116,7 @@ export default function PanelVideos() {
             clone.height = oldClip.height;
             const realDuration = videoClip.meta.duration;
             const newTrim = { ...oldClip.trim };
-            newTrim.to = Math.min(newTrim.to, realDuration);
+            newTrim.to = Math.max(newTrim.to, realDuration);
             newTrim.from = Math.min(newTrim.from, newTrim.to);
             console.warn(
               'This needs to be reviewed. assets from pexels may not have the right duration'
