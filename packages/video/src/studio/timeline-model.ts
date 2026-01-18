@@ -86,10 +86,11 @@ export class TimelineModel {
 
     let clipA: IClip | null = null;
     let clipB: IClip | null = null;
-
+    console.log('[Studio] addTransition', { fromClipId, toClipId });
     if (fromClipId && toClipId) {
       clipA = this.getClipById(fromClipId) ?? null;
       clipB = this.getClipById(toClipId) ?? null;
+      console.log('[Studio] Found clips', { clipA, clipB });
     }
 
     if (!clipA || !clipB) {
@@ -99,6 +100,9 @@ export class TimelineModel {
       });
       return;
     }
+
+    // Ensure clips are ready before calculating timing
+    await Promise.all([clipA.ready, clipB.ready]);
 
     const transitionDuration = duration;
 
@@ -246,7 +250,22 @@ export class TimelineModel {
   }
 
   private async prepareClipForTimeline(clip: IClip, trackId?: string) {
-    // A. Listen for property changes
+    // A. Ensure ID immediately (Synchronous)
+    if (!clip.id) {
+      (clip as any).id = `clip_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+    }
+
+    // B. Add to internal list immediately (Synchronous)
+    if (!this.clips.includes(clip)) {
+      this.clips.push(clip);
+    }
+
+    // C. Add to Track immediately (Synchronous)
+    this.addClipToTrack(clip, trackId);
+
+    // D. Listen for property changes
     const onPropsChange = async () => {
       await this.studio.updateFrame(this.studio.currentTime);
       const interactionManager = this.studio.selection;
@@ -262,28 +281,13 @@ export class TimelineModel {
     clip.on('propsChange', onPropsChange);
     this.studio.clipListeners.set(clip, onPropsChange);
 
-    // B. Link Renderer
+    // E. Link Renderer
     if (this.studio.pixiApp != null && typeof clip.setRenderer === 'function') {
       clip.setRenderer(this.studio.pixiApp.renderer);
     }
 
-    // C. Wait for Ready
+    // F. Wait for Ready
     await clip.ready;
-
-    // D. Ensure ID
-    if (!clip.id) {
-      (clip as any).id = `clip_${Date.now()}_${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
-    }
-
-    // E. Add to internal list
-    if (!this.clips.includes(clip)) {
-      this.clips.push(clip);
-    }
-
-    // F. Add to Track
-    this.addClipToTrack(clip, trackId);
   }
 
   private addClipToTrack(clip: IClip, trackId?: string) {
