@@ -603,6 +603,10 @@ export class Studio extends EventEmitter<StudioEvents> {
   /**
    * Update studio dimensions
    */
+  public setSize(width: number, height: number) {
+    this.updateDimensions(width, height);
+  }
+
   public updateDimensions(width: number, height: number) {
     this.opts.width = width;
     this.opts.height = height;
@@ -611,7 +615,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       this.artboardBg
         .clear()
         .rect(0, 0, width, height)
-        .fill({ color: 0x333333 });
+        .fill({ color: 0x000000 });
     }
     if (this.artboardMask) {
       this.artboardMask
