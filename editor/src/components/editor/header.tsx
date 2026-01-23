@@ -7,9 +7,15 @@ import { ExportModal } from './export-modal';
 import { LogoIcons } from '../shared/logos';
 import Link from 'next/link';
 import { Icons } from '../shared/icons';
-import { Keyboard } from 'lucide-react';
+import { Keyboard, FileJson, FilePlus, Download, Upload } from 'lucide-react';
 import { ShortcutsModal } from './shortcuts-modal';
 import { useEffect } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function Header() {
   const { studio } = useStudioStore();
@@ -151,6 +157,25 @@ export default function Header() {
         <div className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-md text-zinc-200">
           <LogoIcons.scenify width={20} />
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost">File</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuItem onClick={handleExportJSON}>
+              <Download className="mr-2 h-4 w-4" />
+              <span>Export (to JSON)</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleImportJSON}>
+              <Upload className="mr-2 h-4 w-4" />
+              <span>Import from JSON</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleNew}>
+              <FilePlus className="mr-2 h-4 w-4" />
+              <span>Clear or New project</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <div className=" pointer-events-auto flex h-10 items-center px-1.5">
           <Button
