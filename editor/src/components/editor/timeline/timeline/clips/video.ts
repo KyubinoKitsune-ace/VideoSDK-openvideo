@@ -168,19 +168,11 @@ export class Video extends BaseTimelineClip {
     const { signal } = this._thumbAborter;
     this._isFetchingThumbnails = true;
 
-    // Correct 1fps Strategy:
-    // Load thumbnails for every second of the Source Duration that is used by the trim.
-    // We map [trim.from, trim.to].
-
-    // We want 1 thumbnail per second, so step = 1_000_000 us.
     const stepUs = MICROSECONDS_IN_SECOND;
 
-    // Start time: floor(trim.from / 1s) * 1s.
-    // End time: ceil(trim.to / 1s) * 1s.
     const startUs = Math.floor(this.trim.from / stepUs) * stepUs;
     const endUs = Math.ceil(this.trim.to / stepUs) * stepUs;
 
-    // Generate expected timestamps at 1s intervals
     const timestamps: number[] = [];
     for (let t = startUs; t <= endUs; t += stepUs) {
       timestamps.push(t);
@@ -192,28 +184,19 @@ export class Video extends BaseTimelineClip {
         return;
       }
 
-      // Fetch from VideoClip
-      // We assume videoClip.thumbnails uses microseconds for start/end/step based on usage
       const thumbnailsArr = await videoClip.thumbnails(this._thumbnailWidth, {
         start: timestamps[0],
         end: timestamps[timestamps.length - 1],
         step: stepUs,
       });
 
-      // Check if aborted or canvas destroyed before continuing
       if (signal.aborted || !this.canvas) {
         this._isFetchingThumbnails = false;
         return;
       }
 
-      // Cache thumbnails using the SECOND index as key
       const cacheBatch = thumbnailsArr.map((t, i) => {
-        // Map back to the timestamp we expected
-        // NOTE: thumbnailsArr might not exactly match our loop if the backend does its own stepping.
-        // Robustness: use t.ts from the result if available and reliable, otherwise map by index if linear.
-        // Assuming video-clip returns { ts: number, img: Blob }
-        const key = Math.floor(t.ts / stepUs);
-        return { key, img: t.img };
+        return { key: i, img: t.img };
       });
 
       await this.loadThumbnailBatch(cacheBatch);
@@ -300,21 +283,13 @@ export class Video extends BaseTimelineClip {
     const thumbnailWidth = Math.round(height * this._aspectRatio);
     const thumbnailHeight = height;
 
-    // Width of 1 second in pixels on the timeline
     const oneSourceSecWidth =
       (TIMELINE_CONSTANTS.PIXELS_PER_SECOND * this.timeScale) /
       (this.playbackRate || 1);
 
     let minX = Infinity;
     let maxX = -Infinity;
-
-    // Use a small threshold to switch strategies. If a second is wider than a thumbnail,
-    // we want to tile the image representing that second to fill the visual space.
-    // If a second is narrower than a thumbnail (zoomed out or short duration),
-    // we use slot-based drawing to avoid drawing thousands of tiny rects.
-
     if (oneSourceSecWidth >= thumbnailWidth) {
-      // Zoomed In / Normal Strategy: Iterate Source Seconds
       const startSourceSec = Math.floor(
         this.trim.from / MICROSECONDS_IN_SECOND
       );
@@ -334,30 +309,24 @@ export class Video extends BaseTimelineClip {
           this.timeScale;
         const xEnd = xStart + oneSourceSecWidth;
 
-        // Skip if completely out of view
         if (xEnd < 0 || xStart > this.width) continue;
 
         const img =
           this._thumbnailCache.getThumbnail(sec) ||
           this._thumbnailCache.getThumbnail('fallback');
         if (img) {
-          // Determine how many tiles are needed to fill this second's visual width
           const tileCount = Math.ceil(oneSourceSecWidth / thumbnailWidth);
 
           for (let t = 0; t < tileCount; t++) {
             const tileX = xStart + t * thumbnailWidth;
 
-            // Skip individual tile if completely out of view
             if (tileX + thumbnailWidth < 0 || tileX >= this.width) continue;
 
-            // Clamp the drawing to ensure it doesn't exceed bounds
             const drawX = Math.max(0, tileX);
             const drawWidth = Math.min(thumbnailWidth, this.width - drawX);
             const drawHeight = Math.min(thumbnailHeight, this.height);
 
-            // Only draw if there's actual visible area
             if (drawWidth > 0 && drawHeight > 0) {
-              // Calculate source clipping if needed
               const sourceX = drawX > tileX ? drawX - tileX : 0;
 
               ctx.drawImage(
@@ -379,13 +348,10 @@ export class Video extends BaseTimelineClip {
         }
       }
     } else {
-      // Zoomed Out Strategy: Iterate Visual Slots
       const totalThumbnails = Math.ceil(this.width / thumbnailWidth);
 
       for (let i = 0; i < totalThumbnails; i++) {
         const x = i * thumbnailWidth;
-
-        // Skip if beyond width
         if (x >= this.width) break;
 
         const timeOffsetUs = unitsToTimeMs(
