@@ -380,7 +380,7 @@ export default function PanelUploads() {
       </div>
     );
   }
-  console.log({ uploads });
+
   return (
     <div className="h-full flex flex-col">
       <input
