@@ -403,6 +403,8 @@ export class SelectionManager {
     this.activeTransformer = new Transformer({
       group: sprites,
       clip: singleClip, // Only pass clip for single selection
+      artboardWidth: this.studio.opts.width,
+      artboardHeight: this.studio.opts.height,
     });
 
     // Listen for events
