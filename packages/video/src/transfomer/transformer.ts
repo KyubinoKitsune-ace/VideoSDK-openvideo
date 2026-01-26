@@ -10,6 +10,7 @@ import {
 
 import { Wireframe } from './parts/wireframe';
 import { type HandleKind, Handle } from './parts/handle';
+import { SnappingManager, type SnapGuide } from './parts/snapping';
 
 const TMP = {
   delta: new Matrix(),
@@ -40,17 +41,35 @@ export class Transformer extends Container {
   #minW = 1;
   #minH = 1;
 
-  opts: { group: Container[]; centeredScaling?: boolean; clip?: any };
+  #snappingManager: SnappingManager;
+  #guidelines = new Graphics();
+  #unsnappedPivotWorld = new Point();
+
+  opts: {
+    group: Container[];
+    centeredScaling?: boolean;
+    clip?: any;
+    artboardWidth?: number;
+    artboardHeight?: number;
+  };
 
   constructor(opts: {
     group: Container[];
     centeredScaling?: boolean;
     clip?: any;
+    artboardWidth?: number;
+    artboardHeight?: number;
   }) {
     super();
     this.opts = opts;
     this.group = opts.group;
     this.eventMode = 'static';
+
+    this.#snappingManager = new SnappingManager(
+      opts.artboardWidth ?? 1920,
+      opts.artboardHeight ?? 1080
+    );
+    this.addChild(this.#guidelines);
 
     const cb = {
       beginDrag: (h: HandleKind, s: Point) => this.#beginHandleDrag(h, s),
@@ -247,6 +266,7 @@ export class Transformer extends Container {
     // Refresh bounds/pivot to ensure we have the latest global position
     // (in case Artboard moved/zoomed since selection)
     this.#initBounds();
+    this.#unsnappedPivotWorld.copyFrom(this.#pivotWorld);
 
     this.isDragging = true;
     this.lastPointer.copyFrom(e.global);
@@ -255,33 +275,75 @@ export class Transformer extends Container {
 
   #onUp = () => {
     if (this.isDragging) {
-      this.emit('transformEnd');
+      this.#endDrag();
     }
-    this.isDragging = false;
-    this.activeHandle = null;
     this.cursor = 'default';
   };
 
   #onMove = (e: FederatedPointerEvent) => {
     if (!this.isDragging || this.activeHandle || !this.parent) return;
 
-    // Calculate local delta for moving objects (they are in parent's local space)
-    const fromLocal = this.parent.toLocal(this.lastPointer);
-    const toLocal = this.parent.toLocal(e.global);
-    const dxLocal = toLocal.x - fromLocal.x;
-    const dyLocal = toLocal.y - fromLocal.y;
+    // --- Snapping Logic Start ---
+    const parentScale = Math.abs(this.parent.worldTransform.a);
 
+    // Update context with latest dimensions and scale
+    this.#snappingManager.updateContext(
+      this.opts.artboardWidth ?? 1920,
+      this.opts.artboardHeight ?? 1080,
+      parentScale
+    );
+
+    // Calculate pure global mouse delta
+    const dxGlobalMouse = e.global.x - this.lastPointer.x;
+    const dyGlobalMouse = e.global.y - this.lastPointer.y;
+
+    // Update the Virtual (Unsnapped) Pivot
+    // This tracks where the object WOULD be if no snapping occurred
+    this.#unsnappedPivotWorld.x += dxGlobalMouse;
+    this.#unsnappedPivotWorld.y += dyGlobalMouse;
+
+    // Calculate Proposed Parent Position from Virtual Pivot
+    const proposedParentPos = this.parent.toLocal(this.#unsnappedPivotWorld);
+
+    // Construct Proposed Bounds (centered at proposed position)
+    const proposedBounds = new Rectangle(
+        proposedParentPos.x + this.#localBounds.x,
+        proposedParentPos.y + this.#localBounds.y,
+        this.#localBounds.width,
+        this.#localBounds.height
+    );
+    
+    // Check for Snaps on the Proposed (Virtual) Bounds
+    const { dx: snapDx, dy: snapDy, guides } = this.#snappingManager.snapMove(proposedBounds);
+    
+    // Render Guides
+    this.#drawGuides(guides, parentScale);
+    
+    // Calculate Final Target Position (Parent Space)
+    // Final = Proposed + SnapOffset
+    const finalParentPosX = proposedParentPos.x + snapDx;
+    const finalParentPosY = proposedParentPos.y + snapDy;
+    
+    // Calculate Delta to apply to Objects
+    // Delta = FinalTarget - CurrentActualPosition
+    // We need current actual position (pivot in parent space)
+    const currentParentPos = this.parent.toLocal(this.#pivotWorld);
+    
+    const moveDx = finalParentPosX - currentParentPos.x;
+    const moveDy = finalParentPosY - currentParentPos.y;
+
+    // Apply to objects
     for (const obj of this.group) {
-      obj.x += dxLocal;
-      obj.y += dyLocal;
+        obj.x += moveDx;
+        obj.y += moveDy;
     }
 
-    // Calculate global delta for moving the pivot (it tracks global position)
-    const dxGlobal = e.global.x - this.lastPointer.x;
-    const dyGlobal = e.global.y - this.lastPointer.y;
-
-    this.#pivotWorld.x += dxGlobal;
-    this.#pivotWorld.y += dyGlobal;
+    // Update Real Pivot (Source of Truth) to match Final Target
+    // We can just transform the final parent pos back to global
+    // OR just add the same global delta if rotation/scale allows. 
+    // Safest is to re-calculate from parent pos.
+    const newGlobalPivot = this.parent.toGlobal(new Point(finalParentPosX, finalParentPosY));
+    this.#pivotWorld.copyFrom(newGlobalPivot);
 
     this.lastPointer.copyFrom(e.global);
     this.#refresh();
@@ -315,6 +377,25 @@ export class Transformer extends Container {
       this.toLocal(global),
       pivotLocal
     );
+
+    // --- Snapping Logic ---
+    const parentScale = this.parent ? Math.abs(this.parent.worldTransform.a) : 1;
+    this.#snappingManager.updateContext(
+      this.opts.artboardWidth ?? 1920,
+      this.opts.artboardHeight ?? 1080,
+      parentScale
+    );
+
+    // Snap the proposed rectangle
+    // For MVP, let's try snapping the whole rect.
+    const { dx, dy, guides } = this.#snappingManager.snapMove(proposed);
+    
+    // Apply snap
+    proposed.x += dx;
+    proposed.y += dy;
+    
+    this.#drawGuides(guides, parentScale);
+    // ---------------------
 
     const sx = proposed.width / this.#opBounds.width;
     const sy = proposed.height / this.#opBounds.height;
@@ -380,8 +461,35 @@ export class Transformer extends Container {
     this.isDragging = false;
     this.#angle = this.rotation;
     this.activeHandle = null;
+    this.#guidelines.clear();
     this.#refresh(this.#angle);
     this.emit('transformEnd');
+  }
+
+  #drawGuides(guides: SnapGuide[], scale: number) {
+    this.#guidelines.clear();
+    if (!guides.length || !this.parent) return;
+
+    this.#guidelines.stroke({ width: 1 / scale, color: 0x48dbfb }); // Blue for guides
+    
+    for (const guide of guides) {
+         // Create points in Parent Space
+        let p1: Point, p2: Point;
+        
+        if (guide.type === 'vertical') {
+            p1 = new Point(guide.position, guide.start);
+            p2 = new Point(guide.position, guide.end);
+        } else {
+            p1 = new Point(guide.start, guide.position);
+            p2 = new Point(guide.end, guide.position);
+        }
+        
+        // Convert to Local Space
+        this.toLocal(p1, this.parent, p1);
+        this.toLocal(p2, this.parent, p2);
+        
+        this.#guidelines.moveTo(p1.x, p1.y).lineTo(p2.x, p2.y).stroke({ width: 1 / scale, color: 0x48dbfb });
+    }
   }
 
   #refresh(angle: number = this.#angle) {
