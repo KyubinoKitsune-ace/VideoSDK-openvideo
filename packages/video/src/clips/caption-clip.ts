@@ -304,8 +304,8 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
   // Override width/height to trigger refreshCaptions when resized by transformer
   // Use getters from BaseSprite but override setters
-  private _visualPaddingX = 15;
-  private _visualPaddingY = 15;
+  private _visualPaddingX = 0;
+  private _visualPaddingY = 0;
 
   override get width(): number {
     return this._width;
@@ -672,6 +672,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
   private renderTexture: RenderTexture | null = null;
   private wordTexts: CaptionSplitBitmapText[] = [];
   private textStyle!: TextStyle;
+  private textStyleBase!: TextStyle;
   private _refreshing = false;
   private _needsRefresh = false;
   private externalRenderer: Application['renderer'] | null = null;
@@ -837,6 +838,14 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     const style = new TextStyle(styleOptions as Partial<TextStyleOptions>);
     this.textStyle = style;
 
+    // Create base style for measurements (excluding layout properties)
+    const {
+      align,
+      fill,
+      ...rest
+    } = styleOptions;
+    this.textStyleBase = new TextStyle(rest as Partial<TextStyleOptions>);
+
     this.ready = (async () => {
       await this.refreshCaptions();
       const meta = { ...this._meta };
@@ -985,6 +994,14 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
     this.textStyle = new TextStyle(styleOptions as Partial<TextStyleOptions>);
 
+    // Create base style for measurements (excluding layout properties)
+    const {
+      align,
+      fill,
+      ...rest
+    } = styleOptions;
+    this.textStyleBase = new TextStyle(rest as Partial<TextStyleOptions>);
+
     // 4. Refresh captions
     await this.refreshCaptions();
     this.emit('propsChange', opts);
@@ -1068,7 +1085,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       // Measure space width precisely for this Bitmap font
       const tempSpace = new SplitBitmapText({
         text: ' ',
-        style: this.textStyle,
+        style: this.textStyleBase,
       });
       const spaceWidth = Math.ceil(
         tempSpace.getLocalBounds().width || tempSpace.width || metrics.width
