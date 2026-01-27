@@ -322,6 +322,7 @@ export default function PanelCaptions() {
       : { ...clip };
     const caption = clipJson.caption || {};
     const oldWords = caption.words || [];
+    const paragraphIndex = oldWords[0]?.paragraphIndex ?? '';
 
     const isNewWordAdded = newWordsText.length > oldWords.length;
     let updatedWords;
@@ -336,7 +337,7 @@ export default function PanelCaptions() {
       updatedWords = newWordsText.map((wordText, index) => {
         const wordDuration = wordText.length * durationPerChar;
         const word = {
-          ...(oldWords[index] || { isKeyWord: false, paragraphIndex: '' }),
+          ...(oldWords[index] || { isKeyWord: false, paragraphIndex}),
           text: wordText,
           from: currentShift,
           to: currentShift + wordDuration,
