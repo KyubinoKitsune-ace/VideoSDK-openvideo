@@ -314,7 +314,11 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
   override set width(v: number) {
     if (Math.abs(this._width - v) < 1) return;
     this._width = v;
-    this._isWidthConstrained = true;
+    if (v > 0) {
+      this._isWidthConstrained = true;
+    } else {
+      this._isWidthConstrained = false;
+    }
     this.refreshCaptions();
     this.emit('propsChange', { width: v });
   }
@@ -371,6 +375,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
   set text(v: string) {
     if (this._text === v) return;
     this._text = v;
+    this._isWidthConstrained = false;
 
     // Check if the new text is already consistent with current words
     // (This prevents the 'sabotage' when words setter calls text setter)
