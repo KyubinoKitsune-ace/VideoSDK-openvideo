@@ -20,6 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { jsonToClip } from '@designcombo/video';
+import { generateCaptionClips } from '@/lib/caption-generator';
 import { IconTextSize, IconRotate, IconCircle } from '@tabler/icons-react';
 import {
   InputGroup,
@@ -37,12 +39,15 @@ import { getGroupedFonts, getFontByPostScriptName } from '@/utils/font-utils';
 import useLayoutStore from '../store/use-layout-store';
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
+import { useStudioStore } from '@/stores/studio-store';
 
 const GROUPED_FONTS = getGroupedFonts();
 
 interface CaptionPropertiesProps {
   clip: IClip;
 }
+type VerticalAlignMode = 'top' | 'center' | 'bottom';
+type WordsPerLineMode = 'single' | 'multiple';
 
 export function CaptionProperties({ clip }: CaptionPropertiesProps) {
   const captionClip = clip as any;
@@ -56,6 +61,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
   };
 
   const { setFloatingControl } = useLayoutStore();
+  const { studio } = useStudioStore();
 
   const handleUpdate = (updates: any) => {
     // Directly update caption properties
@@ -109,19 +115,191 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
       url: font.url,
     });
 
-    // Directly update font properties
     (captionClip as any).opts.fontFamily = font.postScriptName;
     (captionClip as any).opts.fontUrl = font.url;
 
-    // Update originalOpts for serialization
     if (captionClip.originalOpts) {
       captionClip.originalOpts.fontFamily = font.postScriptName;
       captionClip.originalOpts.fontUrl = font.url;
     }
 
-    // Trigger re-render
     captionClip.emit('propsChange', {});
   };
+
+
+  async function changeWordsPerLine(
+    v: string,
+    captionClip: any,
+    opts: any
+  ) {
+    const val = v as WordsPerLineMode;
+    if (!studio || !captionClip?.mediaId) return;
+
+    const mediaId = captionClip.mediaId;
+    const tracks = studio.getTracks();
+    const siblingClips: any[] = [];
+
+    tracks.forEach((track: any) => {
+      track.clipIds.forEach((id: string) => {
+        const c = studio.getClipById(id);
+        if (c && c.type === 'Caption' && (c as any).opts.mediaId === mediaId) {
+          siblingClips.push(c);
+        }
+      });
+    });
+
+    siblingClips.sort((a, b) => a.display.from - b.display.from);
+
+    if (siblingClips.length === 0) return;
+
+    const uniformTop = captionClip.top ?? 0;
+
+    const mediaClip = studio.getClipById(mediaId);
+    if (!mediaClip) return;
+
+    const mediaStartUs = mediaClip.display.from;
+    const allWords: any[] = [];
+
+    siblingClips.forEach((c) => {
+      const clipStartUs = c.display.from;
+      const words = c.words || [];
+      words.forEach((w: any) => {
+        allWords.push({
+          ...w,
+          start: (clipStartUs + w.from * 1000 - mediaStartUs) / 1000000,
+          end: (clipStartUs + w.to * 1000 - mediaStartUs) / 1000000,
+        });
+      });
+    });
+
+    if (allWords.length === 0) return;
+
+    const newClipsJSON = await generateCaptionClips({
+      videoWidth: (studio as any).opts.width,
+      videoHeight: (studio as any).opts.height,
+      words: allWords,
+      mode: val,
+      fontSize: opts.fontSize || 80,
+      fontFamily: opts.fontFamily || 'Bangers-Regular',
+      fontUrl: opts.fontUrl,
+      style: captionClip.style,
+    });
+
+    const trackId = studio.findTrackIdByClipId(captionClip.id);
+    if (!trackId) return;
+
+    siblingClips.forEach((c) => {
+      try {
+        (c as any).wordsPerLine = val;
+        if ((c as any).opts) (c as any).opts.wordsPerLine = val;
+        if ((c as any).originalOpts) (c as any).originalOpts.wordsPerLine = val;
+        (c as any).emit && (c as any).emit('propsChange', {});
+      } catch (e) {
+        // ignore
+      }
+    });
+
+    const clipsToAdd: IClip[] = [];
+
+    for (const json of newClipsJSON) {
+      const enrichedJson = {
+        ...json,
+        mediaId,
+        wordsPerLine: val,
+        top: uniformTop,
+        originalOpts: {
+          ...(json.originalOpts || {}),
+          wordsPerLine: val,
+        },
+        opts: {
+          ...(json.opts || {}),
+          wordsPerLine: val,
+        },
+        display: {
+          from: json.display.from + mediaStartUs,
+          to: json.display.to + mediaStartUs,
+        },
+      };
+
+      const clip = await jsonToClip(enrichedJson);
+      clipsToAdd.push(clip);
+    }
+
+    siblingClips.forEach((c) => studio.removeClipById(c.id));
+
+    await studio.addClip(clipsToAdd, { trackId });
+
+    try {
+      (captionClip as any).wordsPerLine = val;
+      if ((captionClip as any).opts) (captionClip as any).opts.wordsPerLine = val;
+      if ((captionClip as any).originalOpts)
+        (captionClip as any).originalOpts.wordsPerLine = val;
+      captionClip.emit && captionClip.emit('propsChange', {});
+    } catch (e) {
+      // ignore
+    }
+  }
+
+
+  function updateVerticalAlign(
+    v: string,
+    captionClip: any,
+    handleUpdate: (updates: { top: number }) => void
+  ) {
+    if (!studio) return;
+    
+    const videoHeight = (studio as any).opts.height || 1080;
+    const mediaId = captionClip.mediaId;
+
+    // Find siblings if part of a group
+    let clipsToUpdate: any[] = [captionClip];
+    
+    if (mediaId) {
+      const tracks = studio.getTracks();
+      const siblingClips: any[] = [];
+      tracks.forEach((track: any) => {
+        track.clipIds.forEach((id: string) => {
+          const c = studio.getClipById(id);
+          if (c && c.type === 'Caption' && (c as any).opts.mediaId === mediaId) {
+            siblingClips.push(c);
+          }
+        });
+      });
+      if (siblingClips.length > 0) {
+        clipsToUpdate = siblingClips;
+      }
+    }
+
+    // Apply updates
+    clipsToUpdate.forEach((clip) => {
+      const clipHeight = clip.height || 0;
+      let newTop = clip.top;
+
+      if (v === 'top') {
+        newTop = 80;
+      } else if (v === 'center') {
+        newTop = (videoHeight - clipHeight) / 2;
+      } else if (v === 'bottom') {
+        newTop = videoHeight - clipHeight - 80;
+      }
+
+      if (clip.id === captionClip.id) {
+        handleUpdate({ top: newTop });
+      } else {
+        clip.top = newTop;
+        clip.emit && clip.emit('propsChange', { top: newTop });
+      }
+
+      if (clip.originalOpts) {
+        clip.originalOpts.verticalAlign = v as VerticalAlignMode;
+      }
+      if (clip.opts) {
+        clip.opts.verticalAlign = v as VerticalAlignMode;
+      }
+    });
+  }
+
+
 
   const currentFont =
     getFontByPostScriptName(opts.fontFamily) || GROUPED_FONTS[0].mainFont;
@@ -213,6 +391,47 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
             />
           </InputGroup>
         </div>
+      </div>
+
+      {/* Position Section */}
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Position
+        </label>
+        <Select
+          value={opts.verticalAlign || 'bottom'}
+          onValueChange={(v) => updateVerticalAlign(v, captionClip, handleUpdate)}
+        >
+          <SelectTrigger className="w-full h-9">
+            <SelectValue placeholder="Vertical Position" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="top">Top</SelectItem>
+            <SelectItem value="center">Center</SelectItem>
+            <SelectItem value="bottom">Bottom</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Words per line Section */}
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Words per line
+        </label>
+        <Select
+          value={captionClip.wordsPerLine || 'multiple'}
+          onValueChange={(v) =>
+            changeWordsPerLine(v, captionClip, opts)
+          }
+        >
+          <SelectTrigger className="w-full h-9">
+            <SelectValue placeholder="Words per line" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="single">Single</SelectItem>
+            <SelectItem value="multiple">Multiple</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Rotation Section */}
