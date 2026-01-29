@@ -30,7 +30,8 @@ export async function generateCaptionClips(
   const maxCaptionWidth = videoWidth * 0.8;
   let captionChunks: any[] = [];
 
-  const canvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+  const canvas =
+    typeof document !== 'undefined' ? document.createElement('canvas') : null;
   const ctx = canvas?.getContext('2d');
   if (ctx) {
     ctx.font = `${fontSize}px ${fontFamily}`;
@@ -39,10 +40,11 @@ export async function generateCaptionClips(
   const measureText = (text: string) => {
     if (!ctx) return { width: 0, height: fontSize };
     const metrics = ctx.measureText(text);
-    const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+    const height =
+      metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
     return {
       width: metrics.width,
-      height: height || fontSize
+      height: height || fontSize,
     };
   };
   if (mode === 'single') {
@@ -60,7 +62,10 @@ export async function generateCaptionClips(
           {
             text,
             from: 0,
-            to: ((word.end || word.to / 1000) - (word.start || word.from / 1000)) * 1000,
+            to:
+              ((word.end || word.to / 1000) -
+                (word.start || word.from / 1000)) *
+              1000,
             isKeyWord: true,
             paragraphIndex: word.paragraphIndex ?? 0,
           },
@@ -69,11 +74,11 @@ export async function generateCaptionClips(
     });
   } else {
     captionChunks = groupWordsByWidth(
-    words,
-    maxCaptionWidth,
-    fontSize,
-    fontFamily
-  );
+      words,
+      maxCaptionWidth,
+      fontSize,
+      fontFamily
+    );
   }
 
   const clips: any[] = [];
@@ -88,7 +93,8 @@ export async function generateCaptionClips(
     const durationUs = chunkDurationMs * 1000;
 
     // Use actual measured dimensions from chunk, with padding
-    const captionWidth = Math.ceil(chunk.width) + (mode === 'single' ? 60 : 100); 
+    const captionWidth =
+      Math.ceil(chunk.width) + (mode === 'single' ? 60 : 100);
     const captionHeight = Math.ceil(chunk.height) + 20;
 
     clips.push({
@@ -101,9 +107,12 @@ export async function generateCaptionClips(
       playbackRate: 1,
       duration: durationUs,
       left: (videoWidth - captionWidth) / 2, // Center horizontally
-      top: options.style?.verticalAlign === 'top' ? 80 : 
-           options.style?.verticalAlign === 'center' ? (videoHeight - captionHeight) / 2 : 
-           videoHeight - captionHeight - 80, 
+      top:
+        options.style?.verticalAlign === 'top'
+          ? 80
+          : options.style?.verticalAlign === 'center'
+            ? (videoHeight - captionHeight) / 2
+            : videoHeight - captionHeight - 80,
       width: captionWidth,
       height: captionHeight,
       angle: 0,

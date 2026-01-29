@@ -358,11 +358,17 @@ export class Text extends BaseClip {
     // Create PixiJS TextStyle from options
     // Build style object conditionally to avoid passing undefined values
     const styleOptions = this.createStyleFromOpts(opts);
-    const {wordWrap, wordWrapWidth,lineHeight,letterSpacing,fill, ...rest}=styleOptions
-
+    const {
+      wordWrap,
+      wordWrapWidth,
+      lineHeight,
+      letterSpacing,
+      fill,
+      ...rest
+    } = styleOptions;
 
     const style = new TextStyle(styleOptions);
-    const styleBase = new TextStyle(rest)
+    const styleBase = new TextStyle(rest);
 
     this.textStyle = style;
     this.textStyleBase = styleBase;
@@ -667,8 +673,15 @@ export class Text extends BaseClip {
 
     // 2. Create new style options
     const styleOptions = this.createStyleFromOpts(this.originalOpts);
-    const {wordWrap, wordWrapWidth,lineHeight,letterSpacing,fill, ...rest}=styleOptions
-    const styleBase = new TextStyle(rest)
+    const {
+      wordWrap,
+      wordWrapWidth,
+      lineHeight,
+      letterSpacing,
+      fill,
+      ...rest
+    } = styleOptions;
+    const styleBase = new TextStyle(rest);
     // 3. Update TextStyle
     const style = new TextStyle(styleOptions);
     this.textStyle = style;
@@ -708,10 +721,10 @@ export class Text extends BaseClip {
 
     // Split text into words for SplitBitmapText
     const words = textToRender.split(/\s+/).filter((v) => v.length > 0);
-    
+
     // Cleanup old word texts
-    this.wordTexts.forEach(w => w.destroy());
-    this.wordTexts = words.map(wordStr => {
+    this.wordTexts.forEach((w) => w.destroy());
+    this.wordTexts = words.map((wordStr) => {
       const wordText = new SplitBitmapText({
         text: wordStr,
         style: this.textStyle,
@@ -721,14 +734,16 @@ export class Text extends BaseClip {
     });
 
     // 4. Calculate Layout (Lines) - mostly following CaptionClip logic
-    const decoration = this.originalOpts.textDecoration || (this.originalOpts as any).verticalAlign;
+    const decoration =
+      this.originalOpts.textDecoration ||
+      (this.originalOpts as any).verticalAlign;
     const lineHeightMultiplier = this.originalOpts.lineHeight ?? 1;
     const fontSize = style.fontSize ?? 40;
     const lineHeight = fontSize * lineHeightMultiplier;
 
     // Heuristics for space width
     const metrics = CanvasTextMetrics.measureText(' ', styleBase as TextStyle);
-    
+
     const tempSpace = new SplitBitmapText({
       text: ' ',
       style: this.textStyleBase,
@@ -738,9 +753,11 @@ export class Text extends BaseClip {
     );
     tempSpace.destroy();
 
-    const wrapWidth = (style.wordWrap && style.wordWrapWidth > 0) ? style.wordWrapWidth : 1e5;
+    const wrapWidth =
+      style.wordWrap && style.wordWrapWidth > 0 ? style.wordWrapWidth : 1e5;
 
-    const lines: { words: SplitBitmapText[], width: number, height: number }[] = [];
+    const lines: { words: SplitBitmapText[]; width: number; height: number }[] =
+      [];
     let currentLine: SplitBitmapText[] = [];
     let currentLineWidth = 0;
     let currentLineHeight = 0;
@@ -750,7 +767,8 @@ export class Text extends BaseClip {
       const wordWidth = Math.ceil(bounds.width || wordText.width);
       const wordHeight = Math.ceil(bounds.height || wordText.height);
 
-      const projectedWidth = currentLineWidth + (currentLineWidth > 0 ? spaceWidth : 0) + wordWidth;
+      const projectedWidth =
+        currentLineWidth + (currentLineWidth > 0 ? spaceWidth : 0) + wordWidth;
 
       if (projectedWidth <= wrapWidth || currentLine.length === 0) {
         currentLine.push(wordText);
@@ -761,7 +779,7 @@ export class Text extends BaseClip {
           lines.push({
             words: currentLine,
             width: currentLineWidth,
-            height: Math.max(currentLineHeight, lineHeight)
+            height: Math.max(currentLineHeight, lineHeight),
           });
         }
         currentLine = [wordText];
@@ -774,14 +792,14 @@ export class Text extends BaseClip {
       lines.push({
         words: currentLine,
         width: currentLineWidth,
-        height: Math.max(currentLineHeight, lineHeight)
+        height: Math.max(currentLineHeight, lineHeight),
       });
     }
 
     // 5. Dimension Calculation
     let maxLineWidth = 0;
     let totalHeight = 0;
-    lines.forEach(line => {
+    lines.forEach((line) => {
       maxLineWidth = Math.max(maxLineWidth, line.width);
       totalHeight += line.height;
     });
@@ -795,11 +813,18 @@ export class Text extends BaseClip {
     }
     const contentHeight = textHeight;
 
-    const isAutoWidth = this.width === 0 || Math.abs(this.width - this._lastContentWidth) < 0.1;
-    const isAutoHeight = this.height === 0 || Math.abs(this.height - this._lastContentHeight) < 0.1;
+    const isAutoWidth =
+      this.width === 0 || Math.abs(this.width - this._lastContentWidth) < 0.1;
+    const isAutoHeight =
+      this.height === 0 ||
+      Math.abs(this.height - this._lastContentHeight) < 0.1;
 
-    const containerWidth = isAutoWidth ? contentWidth : Math.max(contentWidth, this.width || 0);
-    const containerHeight = isAutoHeight ? contentHeight : Math.max(contentHeight, this.height || 0);
+    const containerWidth = isAutoWidth
+      ? contentWidth
+      : Math.max(contentWidth, this.width || 0);
+    const containerHeight = isAutoHeight
+      ? contentHeight
+      : Math.max(contentHeight, this.height || 0);
 
     this._lastContentWidth = contentWidth;
     this._lastContentHeight = contentHeight;
@@ -817,7 +842,7 @@ export class Text extends BaseClip {
     const graphics = new Graphics();
     let hasDecoration = false;
 
-    lines.forEach(line => {
+    lines.forEach((line) => {
       let currentX = 0;
       const finalAlign = this.textAlign;
       if (finalAlign === 'center') {
@@ -831,20 +856,33 @@ export class Text extends BaseClip {
       line.words.forEach((wordText, wordIndex) => {
         wordText.x = Math.round(currentX);
         wordText.y = Math.round(currentY);
-        currentX += (wordText.getLocalBounds().width || wordText.width) + (wordIndex < line.words.length - 1 ? spaceWidth : 0);
+        currentX +=
+          (wordText.getLocalBounds().width || wordText.width) +
+          (wordIndex < line.words.length - 1 ? spaceWidth : 0);
       });
 
       // Handle Text Decoration
-      if (decoration && decoration !== 'none' && ['underline', 'overline', 'strikethrough', 'line-through'].includes(decoration)) {
+      if (
+        decoration &&
+        decoration !== 'none' &&
+        ['underline', 'overline', 'strikethrough', 'line-through'].includes(
+          decoration
+        )
+      ) {
         hasDecoration = true;
-        const finalDecoration = decoration === 'strikethrough' ? 'line-through' : decoration;
+        const finalDecoration =
+          decoration === 'strikethrough' ? 'line-through' : decoration;
         const lineThickness = Math.max(1, fontSize / 12);
-        
+
         // Determine Line Color
         let lineColor = 0xffffff;
         if (typeof style.fill === 'number') {
           lineColor = style.fill;
-        } else if (style.fill && typeof style.fill === 'object' && 'fill' in style.fill) {
+        } else if (
+          style.fill &&
+          typeof style.fill === 'object' &&
+          'fill' in style.fill
+        ) {
           lineColor = 0xffffff;
         }
 
@@ -857,7 +895,12 @@ export class Text extends BaseClip {
           yOffset = 0;
         }
 
-        graphics.rect(lineXStart, currentY + yOffset, line.width, lineThickness);
+        graphics.rect(
+          lineXStart,
+          currentY + yOffset,
+          line.width,
+          lineThickness
+        );
         graphics.fill(lineColor);
       }
 
@@ -900,7 +943,7 @@ export class Text extends BaseClip {
     const styleOptions: any = {
       fontSize,
       fontFamily: opts.fontFamily ?? 'Roboto',
-      fontWeight: opts.fontWeight as any ?? 'normal',
+      fontWeight: (opts.fontWeight as any) ?? 'normal',
       fontStyle: opts.fontStyle ?? 'normal',
       align: opts.align ?? 'left',
       wordWrap: opts.wordWrap ?? false,
@@ -948,12 +991,12 @@ export class Text extends BaseClip {
       // Advanced stroke object
       const strokeColor = parseColor(opts.stroke.color);
       if (strokeColor !== undefined) {
-        styleOptions.stroke = { 
-          color: strokeColor, 
+        styleOptions.stroke = {
+          color: strokeColor,
           width: opts.stroke.width,
           join: opts.stroke.join as LineJoin,
           cap: opts.stroke.cap,
-          miterLimit: opts.stroke.miterLimit
+          miterLimit: opts.stroke.miterLimit,
         };
       }
     } else {

@@ -36,7 +36,8 @@ export interface BaseSpriteEvents {
  */
 export abstract class BaseSprite<
   T extends BaseSpriteEvents = BaseSpriteEvents,
-> extends EventEmitter<T> {  /**
+> extends EventEmitter<T> {
+  /**
    * Unique identifier for the sprite/clip
    */
   id = '';

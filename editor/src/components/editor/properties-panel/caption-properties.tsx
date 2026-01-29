@@ -126,12 +126,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
     captionClip.emit('propsChange', {});
   };
 
-
-  async function changeWordsPerLine(
-    v: string,
-    captionClip: any,
-    opts: any
-  ) {
+  async function changeWordsPerLine(v: string, captionClip: any, opts: any) {
     const val = v as WordsPerLineMode;
     if (!studio || !captionClip?.mediaId) return;
 
@@ -231,7 +226,8 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
 
     try {
       (captionClip as any).wordsPerLine = val;
-      if ((captionClip as any).opts) (captionClip as any).opts.wordsPerLine = val;
+      if ((captionClip as any).opts)
+        (captionClip as any).opts.wordsPerLine = val;
       if ((captionClip as any).originalOpts)
         (captionClip as any).originalOpts.wordsPerLine = val;
       captionClip.emit && captionClip.emit('propsChange', {});
@@ -240,27 +236,30 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
     }
   }
 
-
   function updateVerticalAlign(
     v: string,
     captionClip: any,
     handleUpdate: (updates: { top: number }) => void
   ) {
     if (!studio) return;
-    
+
     const videoHeight = (studio as any).opts.height || 1080;
     const mediaId = captionClip.mediaId;
 
     // Find siblings if part of a group
     let clipsToUpdate: any[] = [captionClip];
-    
+
     if (mediaId) {
       const tracks = studio.getTracks();
       const siblingClips: any[] = [];
       tracks.forEach((track: any) => {
         track.clipIds.forEach((id: string) => {
           const c = studio.getClipById(id);
-          if (c && c.type === 'Caption' && (c as any).opts.mediaId === mediaId) {
+          if (
+            c &&
+            c.type === 'Caption' &&
+            (c as any).opts.mediaId === mediaId
+          ) {
             siblingClips.push(c);
           }
         });
@@ -298,8 +297,6 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
       }
     });
   }
-
-
 
   const currentFont =
     getFontByPostScriptName(opts.fontFamily) || GROUPED_FONTS[0].mainFont;
@@ -400,7 +397,9 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
         </label>
         <Select
           value={opts.verticalAlign || 'bottom'}
-          onValueChange={(v) => updateVerticalAlign(v, captionClip, handleUpdate)}
+          onValueChange={(v) =>
+            updateVerticalAlign(v, captionClip, handleUpdate)
+          }
         >
           <SelectTrigger className="w-full h-9">
             <SelectValue placeholder="Vertical Position" />
@@ -420,9 +419,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
         </label>
         <Select
           value={captionClip.wordsPerLine || 'multiple'}
-          onValueChange={(v) =>
-            changeWordsPerLine(v, captionClip, opts)
-          }
+          onValueChange={(v) => changeWordsPerLine(v, captionClip, opts)}
         >
           <SelectTrigger className="w-full h-9">
             <SelectValue placeholder="Words per line" />

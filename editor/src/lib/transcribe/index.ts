@@ -56,7 +56,7 @@ export interface TranscribeOptions {
  */
 export async function transcribe(
   options: TranscribeOptions
-): Promise<Partial<TranscriptObject>> {
+): Promise<Partial<TranscriptObject> | null> {
   const {
     url,
     apiKey = process.env.DEEPGRAM_API_KEY || process.env.DEPPGRAM_KEY,

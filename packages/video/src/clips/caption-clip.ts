@@ -311,7 +311,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
   // Override width/height to trigger refreshCaptions when resized by transformer
   // Use getters from BaseSprite but override setters
-  private _visualPaddingX = 20; 
+  private _visualPaddingX = 20;
   private _visualPaddingY = 15;
   private _lastTickTime = 0;
 
@@ -886,11 +886,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     this.textStyle = style;
 
     // Create base style for measurements (excluding layout properties)
-    const {
-      align,
-      fill,
-      ...rest
-    } = styleOptions;
+    const { align, fill, ...rest } = styleOptions;
     this.textStyleBase = new TextStyle(rest as Partial<TextStyleOptions>);
 
     this.ready = (async () => {
@@ -987,8 +983,11 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     }
 
     // Handle stroke
-    const hasStroke = opts.stroke !== undefined || opts.strokeWidth !== undefined || 
-                      this.originalOpts.stroke || this.originalOpts.strokeWidth;
+    const hasStroke =
+      opts.stroke !== undefined ||
+      opts.strokeWidth !== undefined ||
+      this.originalOpts.stroke ||
+      this.originalOpts.strokeWidth;
     if (hasStroke) {
       if (
         this.originalOpts.stroke &&
@@ -1048,11 +1047,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     this.textStyle = new TextStyle(styleOptions as Partial<TextStyleOptions>);
 
     // Create base style for measurements (excluding layout properties)
-    const {
-      align,
-      fill,
-      ...rest
-    } = styleOptions;
+    const { align, fill, ...rest } = styleOptions;
     this.textStyleBase = new TextStyle(rest as Partial<TextStyleOptions>);
 
     // 4. Refresh captions
@@ -1504,7 +1499,9 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
           typeof fill === 'object' && fill !== null && 'type' in fill
             ? 0xffffff // Placeholder for gradient, handles elsewhere if needed
             : (fill as string | number);
-        ({ color: textColor, alpha: textAlpha } = resolveColor(fillToResolve as any));
+        ({ color: textColor, alpha: textAlpha } = resolveColor(
+          fillToResolve as any
+        ));
       }
 
       // Aplicar color al texto
@@ -1816,8 +1813,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         style.verticalAlign = opts.verticalAlign;
       if (opts.wordWrapWidth !== undefined)
         style.wordWrapWidth = opts.wordWrapWidth;
-      if (opts.wordWrap !== undefined)
-        style.wordWrap = opts.wordWrap;
+      if (opts.wordWrap !== undefined) style.wordWrap = opts.wordWrap;
 
       // Handle stroke
       if (opts.stroke) {
@@ -1955,8 +1951,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       captionOpts.verticalAlign = style.verticalAlign;
     if (style.wordWrapWidth !== undefined)
       captionOpts.wordWrapWidth = style.wordWrapWidth;
-    if (style.wordWrap !== undefined)
-      captionOpts.wordWrap = style.wordWrap;
+    if (style.wordWrap !== undefined) captionOpts.wordWrap = style.wordWrap;
 
     // Handle wordsPerLine from style or root
     if (style.wordsPerLine !== undefined) {
@@ -2066,8 +2061,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     clip.opacity = json.opacity;
     clip.flip = json.flip;
 
-    clip.wordsPerLine = json.wordsPerLine ?? "multiple";
-
+    clip.wordsPerLine = json.wordsPerLine ?? 'multiple';
 
     // Apply animation if present
     if (json.animation) {

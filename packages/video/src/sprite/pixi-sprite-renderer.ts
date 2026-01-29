@@ -253,7 +253,9 @@ export class PixiSpriteRenderer {
     const baseScaleX =
       !isCaption && width && width !== 0 ? Math.abs(width) / textureWidth : 1;
     const baseScaleY =
-      !isCaption && height && height !== 0 ? Math.abs(height) / textureHeight : 1;
+      !isCaption && height && height !== 0
+        ? Math.abs(height) / textureHeight
+        : 1;
 
     if (flip === 'horizontal') {
       this.pixiSprite.scale.x = -baseScaleX;

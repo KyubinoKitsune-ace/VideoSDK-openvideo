@@ -99,7 +99,7 @@ export interface TextStyleJSON {
         x1: number;
         y1: number;
         colors: Array<{ ratio: number; color: string | number }>;
-      };  
+      };
   align?: 'left' | 'center' | 'right';
   fontUrl?: string; // Font URL for custom fonts
   stroke?: {
