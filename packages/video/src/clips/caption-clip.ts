@@ -68,6 +68,7 @@ export interface ICaptionStyle {
   align?: ICaptionOpts['align'];
   textCase?: ICaptionOpts['textCase'];
   verticalAlign?: ICaptionOpts['verticalAlign'];
+  wordsPerLine?: ICaptionOpts['wordsPerLine'];
   stroke?: { color: string | number; width: number };
   shadow?: {
     color: string | number;
@@ -96,6 +97,7 @@ export interface ICaptionEvents extends BaseSpriteEvents {
     stroke: ICaptionOpts['stroke'];
     dropShadow: ICaptionOpts['dropShadow'];
     caption: ICaptionOpts['caption'];
+    wordsPerLine: ICaptionOpts['wordsPerLine'];
   }>;
 }
 
@@ -271,6 +273,11 @@ export interface ICaptionOpts {
    * Internal flag to skip automatic positioning
    */
   initialLayoutApplied?: boolean;
+  /**
+   * Words per line mode ('single' or 'multiple')
+   * @default 'multiple'
+   */
+  wordsPerLine?: 'single' | 'multiple';
 }
 
 /**
@@ -466,6 +473,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       align: opts.align,
       textCase: opts.textCase,
       verticalAlign: opts.verticalAlign,
+      wordsPerLine: opts.wordsPerLine,
       stroke: opts.stroke
         ? typeof opts.stroke === 'object'
           ? { color: opts.stroke.color, width: opts.stroke.width }
@@ -485,6 +493,14 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
   override set style(v: Partial<ICaptionOpts> | ICaptionStyle) {
     this.updateStyle(v as Partial<ICaptionOpts>);
+  }
+
+  get wordsPerLine(): 'single' | 'multiple' {
+    return this.opts.wordsPerLine;
+  }
+
+  set wordsPerLine(v: 'single' | 'multiple') {
+    this.updateStyle({ wordsPerLine: v });
   }
 
   get fontFamily(): string {
@@ -687,6 +703,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     }>;
     preserveKeywordColor: boolean;
     mediaId?: string;
+    wordsPerLine: 'single' | 'multiple';
   };
   // Pixi rendering fields (to mirror TextClip)
   private pixiTextContainer: Container | null = null;
@@ -751,6 +768,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         opts.preserveKeywordColor ??
         false,
       mediaId: opts.mediaId,
+      wordsPerLine: opts.wordsPerLine ?? 'multiple',
     };
 
     this._initialLayoutApplied = opts.initialLayoutApplied ?? false;
@@ -911,6 +929,8 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         this.opts.wordWrap = true;
       }
     }
+    if (opts.wordsPerLine !== undefined)
+      this.opts.wordsPerLine = opts.wordsPerLine;
 
     // Handle nested colors in opts.caption.colors
     if (opts.caption?.colors) {
@@ -1134,10 +1154,13 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       // Use a robust videoWidth fallback
       const videoWidth = this.opts.videoWidth || 1280;
 
-      let wrapWidth = videoWidth - paddingX * 2;
-      if (this.opts.wordWrapWidth > 0) {
+      let wrapWidth = 0;
+      if (this.opts.wordWrapWidth > 0 && this.opts.wordsPerLine !== 'single') {
         // Use the persistent wrap limit and subtract padding to keep text inside the box
         wrapWidth = this.opts.wordWrapWidth - paddingX * 2;
+      } else if (this.opts.wordsPerLine === 'single') {
+        // If wordsPerLine is 'single', each word gets its own line, so wrapWidth is effectively infinite
+        wrapWidth = videoWidth * 5; // A very generous width
       } else if (!isAutoWidthNow && this.width > 0) {
         // Fallback for manual resizes
         wrapWidth = this.width + 10;
@@ -1174,11 +1197,13 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
           : null;
 
         // Force new line if paragraphIndex changed (explicit breaks/newlines)
+        // OR if wordsPerLine is set to 'single'
         const shouldForceNewLine =
-          prevWordData &&
-          wordData &&
-          wordData.paragraphIndex !== undefined &&
-          wordData.paragraphIndex !== prevWordData.paragraphIndex;
+          (prevWordData &&
+            wordData &&
+            wordData.paragraphIndex !== undefined &&
+            wordData.paragraphIndex !== prevWordData.paragraphIndex) ||
+          this.opts.wordsPerLine === 'single';
 
         const projectedWidth =
           currentLineWidth +
@@ -1893,6 +1918,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       id: this.id,
       effects: this.effects,
       mediaId: this.mediaId,
+      wordsPerLine: this.opts.wordsPerLine,
     } as CaptionJSON;
   }
 
@@ -1931,6 +1957,13 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       captionOpts.wordWrapWidth = style.wordWrapWidth;
     if (style.wordWrap !== undefined)
       captionOpts.wordWrap = style.wordWrap;
+
+    // Handle wordsPerLine from style or root
+    if (style.wordsPerLine !== undefined) {
+      captionOpts.wordsPerLine = style.wordsPerLine;
+    } else if (json.wordsPerLine !== undefined) {
+      captionOpts.wordsPerLine = json.wordsPerLine;
+    }
 
     // Handle fontUrl from style (new) or top-level (old)
     if (style.fontUrl !== undefined) {
@@ -2033,6 +2066,9 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     clip.opacity = json.opacity;
     clip.flip = json.flip;
 
+    clip.wordsPerLine = json.wordsPerLine ?? "multiple";
+
+
     // Apply animation if present
     if (json.animation) {
       clip.setAnimation(json.animation.keyFrames, json.animation.opts);
@@ -2047,6 +2083,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     }
 
     await clip.ready;
+    console.log("clip",clip);
     return clip;
   }
 

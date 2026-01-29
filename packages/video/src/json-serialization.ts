@@ -122,6 +122,7 @@ export interface TextStyleJSON {
   letterSpacing?: number;
   textCase?: 'none' | 'uppercase' | 'lowercase' | 'title';
   verticalAlign?: 'top' | 'center' | 'bottom';
+  wordsPerLine?: 'single' | 'multiple';
 }
 
 // Text clip specific
@@ -187,6 +188,7 @@ export interface CaptionJSON extends BaseClipJSON {
   videoHeight?: number;
   fontUrl?: string;
   mediaId?: string;
+  wordsPerLine?: 'single' | 'multiple';
 }
 
 // Effect clip specific
@@ -404,6 +406,13 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
         captionClipOpts.fontUrl = json.fontUrl;
       }
 
+      // Handle wordsPerLine from style or top-level
+      if (style.wordsPerLine !== undefined) {
+        captionClipOpts.wordsPerLine = style.wordsPerLine;
+      } else if (json.wordsPerLine !== undefined) {
+        captionClipOpts.wordsPerLine = json.wordsPerLine;
+      }
+
       // Handle stroke
       if (style.stroke) {
         captionClipOpts.stroke = style.stroke.color;
@@ -509,6 +518,9 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
 
       if (json.mediaId) {
         captionClipOpts.mediaId = json.mediaId;
+      }
+      if (json.wordsPerLine) {
+        captionClipOpts.wordsPerLine = json.wordsPerLine;
       }
       captionClipOpts.initialLayoutApplied = true;
       clip = new Caption(text, captionClipOpts);

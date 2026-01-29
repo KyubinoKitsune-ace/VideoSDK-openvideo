@@ -7,6 +7,8 @@ interface CaptionClipOptions {
   fontSize?: number;
   fontFamily?: string;
   fontUrl?: string;
+  mode?: 'single' | 'multiple';
+  style?: any;
 }
 
 /**
@@ -22,15 +24,57 @@ export async function generateCaptionClips(
     fontSize = 80,
     fontFamily = 'Bangers-Regular',
     fontUrl = 'https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf',
+    mode = 'multiple',
   } = options;
 
   const maxCaptionWidth = videoWidth * 0.8;
-  const captionChunks = groupWordsByWidth(
+  let captionChunks: any[] = [];
+
+  const canvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+  const ctx = canvas?.getContext('2d');
+  if (ctx) {
+    ctx.font = `${fontSize}px ${fontFamily}`;
+  }
+
+  const measureText = (text: string) => {
+    if (!ctx) return { width: 0, height: fontSize };
+    const metrics = ctx.measureText(text);
+    const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+    return {
+      width: metrics.width,
+      height: height || fontSize
+    };
+  };
+  if (mode === 'single') {
+    // Each word is a chunk
+    captionChunks = words.map((word) => {
+      const text = word.word || word.text || '';
+      const dims = measureText(text);
+      return {
+        text,
+        from: word.start || word.from / 1000,
+        to: word.end || word.to / 1000,
+        width: dims.width,
+        height: dims.height,
+        words: [
+          {
+            text,
+            from: 0,
+            to: ((word.end || word.to / 1000) - (word.start || word.from / 1000)) * 1000,
+            isKeyWord: true,
+            paragraphIndex: word.paragraphIndex ?? 0,
+          },
+        ],
+      };
+    });
+  } else {
+    captionChunks = groupWordsByWidth(
     words,
     maxCaptionWidth,
     fontSize,
     fontFamily
   );
+  }
 
   const clips: any[] = [];
 
@@ -43,7 +87,8 @@ export async function generateCaptionClips(
     const toUs = chunkToMs * 1000;
     const durationUs = chunkDurationMs * 1000;
 
-    const captionWidth = Math.ceil(chunk.width) + 90; // Add padding
+    // Use actual measured dimensions from chunk, with padding
+    const captionWidth = Math.ceil(chunk.width) + (mode === 'single' ? 60 : 100); 
     const captionHeight = Math.ceil(chunk.height) + 20;
 
     clips.push({
@@ -56,7 +101,9 @@ export async function generateCaptionClips(
       playbackRate: 1,
       duration: durationUs,
       left: (videoWidth - captionWidth) / 2, // Center horizontally
-      top: videoHeight - 200, // Position near bottom
+      top: options.style?.verticalAlign === 'top' ? 80 : 
+           options.style?.verticalAlign === 'center' ? (videoHeight - captionHeight) / 2 : 
+           videoHeight - captionHeight - 80, 
       width: captionWidth,
       height: captionHeight,
       angle: 0,
@@ -64,7 +111,7 @@ export async function generateCaptionClips(
       opacity: 1,
       flip: null,
       text: chunk.text,
-      style: {
+      style: options.style || {
         fontSize: fontSize,
         fontFamily: fontFamily,
         fontWeight: '700',
@@ -99,6 +146,7 @@ export async function generateCaptionClips(
           videoHeight: videoHeight,
         },
       },
+      wordsPerLine: mode,
     });
   }
 
