@@ -27,6 +27,7 @@ export class Text extends BaseTimelineClip {
   constructor(options: TextClipProps) {
     super(options);
     Object.assign(this, Text.ownDefaults);
+    this.text = options.text;
     this.set({
       // fill: TRACK_COLORS.text.solid,
     });

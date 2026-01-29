@@ -139,11 +139,9 @@ export class TimelineModel {
 
     let clipA: IClip | null = null;
     let clipB: IClip | null = null;
-    console.log('[Studio] addTransition', { fromClipId, toClipId });
     if (fromClipId && toClipId) {
       clipA = this.getClipById(fromClipId) ?? null;
       clipB = this.getClipById(toClipId) ?? null;
-      console.log('[Studio] Found clips', { clipA, clipB });
     }
 
     if (!clipA || !clipB) {
