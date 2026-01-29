@@ -111,7 +111,7 @@ export function EditableTimecode({
         className={cn(
           'text-xs bg-transparent border-none outline-none',
           'focus:bg-background focus:border focus:border-primary focus:px-1 focus:rounded',
-          'tabular-nums text-primary',
+          'tabular-nums text-foreground',
           hasError && 'text-destructive focus:border-destructive',
           className
         )}
@@ -125,7 +125,7 @@ export function EditableTimecode({
     <span
       onClick={startEditing}
       className={cn(
-        'text-xs tabular-nums text-primary cursor-pointer',
+        'text-xs tabular-nums text-foreground cursor-pointer',
         'hover:bg-muted/50 hover:rounded px-1 -mx-1 transition-colors',
         disabled && 'cursor-default hover:bg-transparent',
         className

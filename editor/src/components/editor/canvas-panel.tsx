@@ -12,7 +12,7 @@ const DEFAULT_CANVAS_SIZE = {
 
 const STUDIO_CONFIG = {
   fps: 30,
-  bgColor: '#171717',
+  bgColor: '#241E21',
   interactivity: true,
   spacing: 20,
 } as const;
