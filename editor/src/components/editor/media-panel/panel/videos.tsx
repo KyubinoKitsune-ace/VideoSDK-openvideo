@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudioStore } from '@/stores/studio-store';
-import { Video, Log, Placeholder } from '@designcombo/video';
+import { Video, Log, Placeholder } from 'openvideo';
 import { Search, Film, Loader2 } from 'lucide-react';
 import {
   InputGroup,

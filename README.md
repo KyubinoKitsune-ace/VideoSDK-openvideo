@@ -1,20 +1,20 @@
 <p align="center">
-  <a href="https://github.com/designcombo/react-video-editor">
+  <a href="https://github.com/openvideodev/openvideo">
     <img width="150px" height="150px" src="https://cdn.scenify.io/combo-logo-www.png"/>
   </a>
 </p>
-<h1 align="center">Combo Video SDK</h1>
+<h1 align="center">OpenVideo SDK</h1>
 
 <div align="center">
   
 A high-performance video rendering and processing library for the web, built with WebCodecs and PixiJS.
 
 <p align="center">
-    <a href="https://combo.sh/">Combo</a>
+    <a href="https://openvideo.dev/">OpenVideo</a>
     ·  
-    <a href="https://discord.gg/2ytdyHBu">Discord</a>
+    <a href="https://discord.gg/openvideo">Discord</a>
     ·  
-    <a href="https://docs.combo.sh">Docs</a>
+    <a href="https://docs.openvideo.dev">Docs</a>
 </p>
 </div>
 
@@ -30,12 +30,12 @@ A high-performance video rendering and processing library for the web, built wit
 
 ## Documentation
 
-Comprehensive documentation is available at [docs.combo.sh](https://docs.combo.sh).
+Comprehensive documentation is available at [docs.openvideo.dev](https://docs.openvideo.dev).
 
 ## Installation
 
 ```bash
-npm install @designcombo/video
+npm install openvideo
 ```
 
 ## Quick Start
@@ -43,7 +43,7 @@ npm install @designcombo/video
 ### Basic Composition
 
 ```typescript
-import { Studio, Video } from '@designcombo/video';
+import { Studio, Video } from 'openvideo';
 
 // 1. Initialize the Studio (Project State & Preview)
 const studio = new Studio({
@@ -78,7 +78,7 @@ studio.play();
 
 ## Contact
 
-For inquiries, support, or custom solutions, reach out to us at [cloud@designcombo.dev](mailto:cloud@designcombo.dev).
+For inquiries, support, or custom solutions, reach out to us at [hello@openvideo.dev](mailto:hello@openvideo.dev).
 
 ## License
 

@@ -1,12 +1,12 @@
 ---
 title: Basic Usage
-description: Fundamentals of using the DesignCombo Video SDK.
+description: Fundamentals of using the OpenVideo Video SDK.
 ---
 
 ## Creating a Studio
 
 ```ts
-import { Studio } from "@designcombo/video";
+import { Studio } from "openvideo";
 
 const studio = new Studio({
   width: 1920,
@@ -23,7 +23,7 @@ await studio.ready;
 
 ### Adding Image Clips
 ```ts
-import { Image } from "@designcombo/video";
+import { Image } from "openvideo";
 
 // Load image clip asynchronously
 const imageClip = await Image.fromUrl("photo.jpg");
@@ -46,7 +46,7 @@ studio.addClip(imageClip);
 ### Adding Video Clips
 
 ```ts
-import { Video } from "@designcombo/video";
+import { Video } from "openvideo";
 
 // Load video clip asynchronously
 const videoClip = await Video.fromUrl("clip.mp4");
@@ -69,7 +69,7 @@ studio.addClip(videoClip);
 ### Adding Text Clips
 
 ```ts
-import { Text } from "@designcombo/video";
+import { Text } from "openvideo";
 
 const textClip = new Text("Hello World", {
   fontSize: 48,
@@ -92,7 +92,7 @@ studio.addClip(textClip);
 ## Loading Multiple Clips in Parallel
 
 ```ts
-import { Image, Video } from "@designcombo/video";
+import { Image, Video } from "openvideo";
 
 // Efficient parallel loading
 const [imageClip1, imageClip2, videoClip] = await Promise.all([
@@ -114,7 +114,7 @@ studio.addClip(videoClip);
 ## Handling Loading States
 
 ```ts
-import { Video, Log } from "@designcombo/video";
+import { Video, Log } from "openvideo";
 
 try {
   const videoClip = await Video.fromUrl("clip.mp4");

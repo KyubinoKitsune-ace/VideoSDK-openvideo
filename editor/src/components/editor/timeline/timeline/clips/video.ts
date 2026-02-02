@@ -4,7 +4,7 @@ import { createTrimControls } from '../controls';
 import { editorFont } from '@/components/editor/constants';
 import { TIMELINE_CONSTANTS } from '@/components/editor/timeline/timeline-constants';
 import { useStudioStore } from '@/stores/studio-store';
-import type { Video as VideoClip } from '@designcombo/video';
+import type { Video as VideoClip } from 'openvideo';
 import ThumbnailCache from '../utils/thumbnail-cache';
 import { unitsToTimeMs } from '../utils/filmstrip';
 

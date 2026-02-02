@@ -2,6 +2,7 @@
   "title": "Documentation",
   "pages": [
     "index",
+    "changelog",
     "---Getting Started---",
     "installation",
     "basic-usage",

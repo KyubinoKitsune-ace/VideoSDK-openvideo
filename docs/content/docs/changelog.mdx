@@ -1,0 +1,29 @@
+---
+title: Changelog
+description: History of changes and releases.
+---
+
+# Changelog
+
+All notable changes to the `openvideo` project will be documented in this file.
+
+## [0.0.1] - 2026-02-02
+
+### Added
+- Initial major release of the `openvideo` package (previously `openvideo`).
+- Integrated WebCodecs for high-performance client-side video rendering.
+- Implemented a flexible `Studio` core for interactive project management.
+- Support for various clip types: `Video`, `Image`, `Text`, `Audio`, and `Caption`.
+- Built-in `Effect` and `Transition` systems.
+- Comprehensive `SelectionManager` and `Transformer` for interactive editing.
+- `HistoryManager` for robust undo/redo support.
+- JSON serialization/deserialization for project persistence.
+
+### Changed
+- Refactored `updateArtboardLayout` to ensure responsive canvas behavior.
+- Improved resize detection using `ResizeObserver` and `getBoundingClientRect`.
+- Optimized PIXI application initialization for better container filling.
+
+### Fixed
+- Resolved issue where canvas dimensions wouldn't grow correctly with its container.
+- Fixed infinite recursion loops during renderer resize events.

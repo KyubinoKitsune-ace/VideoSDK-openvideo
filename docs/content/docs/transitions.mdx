@@ -10,7 +10,7 @@ Transitions create smooth visual effects between two consecutive clips on the ti
 To add a transition, you can use the `addTransition` method on the `Studio` instance. It is recommended to add transitions after both clips have been added to the studio.
 
 ```ts
-import { Studio, Video, GL_TRANSITION_OPTIONS } from '@designcombo/video';
+import { Studio, Video, Transition } from 'openvideo';
 
 const studio = new Studio({
   width: 1080,
@@ -116,4 +116,4 @@ You can find the full list of available transitions in the `GL_TRANSITION_OPTION
 
 ## Overlap Management
 
-DesignCombo automatically handles the visual overlap during the transition. The software ensures that both clips are active and rendered during the transition duration. The transition center is aligned with the junction of the two clips.
+OpenVideo automatically handles the visual overlap during the transition. The software ensures that both clips are active and rendered during the transition duration. The transition center is aligned with the junction of the two clips.

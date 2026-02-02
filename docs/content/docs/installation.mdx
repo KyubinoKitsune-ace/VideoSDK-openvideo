@@ -1,28 +1,26 @@
 ---
 title: Installation
-description: How to install and set up the DesignCombo Video SDK.
+description: How to install and set up the OpenVideo Video SDK.
 ---
 
 ## Package Manager
 
-Install DesignCombo using your preferred package manager:
+Install OpenVideo using your preferred package manager:
 
 ```bash
-# pnpm (recommended)
-pnpm add @designcombo/video
-
-# npm
-npm install @designcombo/video
-
-# yarn
-yarn add @designcombo/video
+# npm (recommended)
+npm install openvideo
+# or
+pnpm add openvideo
+# or
+yarn add openvideo
 ```
 
-**Note:** DesignCombo includes PixiJS as a dependency - no need to install it separately.
+**Note:** OpenVideo includes PixiJS as a dependency - no need to install it separately.
 
 ## Browser Support
 
-DesignCombo requires modern browsers with support for:
+OpenVideo requires modern browsers with support for:
 
 - **WebCodecs API** - For video encoding/decoding (required)
 - **WebGL** - For hardware-accelerated rendering (required)
@@ -43,7 +41,7 @@ DesignCombo requires modern browsers with support for:
 ## Quick Start
 
 ```ts
-import { Studio, Video } from "@designcombo/video";
+import { Studio, Video } from "openvideo";
 
 const studio = new Studio({
   width: 1920,
@@ -69,10 +67,10 @@ studio.play();
 
 ## TypeScript
 
-DesignCombo includes full type definitions:
+OpenVideo includes full type definitions:
 
 ```ts
-import { Studio, type IStudioOpts } from "@designcombo/video";
+import { Studio, type IStudioOpts } from "openvideo";
 
 const opts: IStudioOpts = {
   width: 1920,
@@ -89,7 +87,7 @@ For quick prototyping, use the CDN version:
 
 ```html
 <script type="module">
-  import { Studio } from "https://cdn.jsdelivr.net/npm/@designcombo/video/+esm";
+  import { Studio } from "https://cdn.jsdelivr.net/npm/openvideo/+esm";
 
   const studio = new Studio({
     width: 1920,
@@ -103,7 +101,7 @@ For quick prototyping, use the CDN version:
 ## Verifying Installation
 
 ```ts
-import { Compositor } from "@designcombo/video";
+import { Compositor } from "openvideo";
 
 // Check environment capabilities
 const result = await Compositor.isSupported();

@@ -18,8 +18,8 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
 
   const MDX = page.data.body;
   const gitConfig = {
-    user: 'designcombo',
-    repo: 'combo',
+    user: 'openvideodev',
+    repo: 'openvideo',
     branch: 'main',
   };
 

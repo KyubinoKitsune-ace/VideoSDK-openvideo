@@ -1,4 +1,4 @@
-# Combo - AI Video Editor
+# OpenVideo - AI Video Editor
 
 An advanced, AI-powered video editor that leverages **WebCodecs API** for high-performance client-side video rendering. This project allows users to create, edit, and export videos directly in the browser with the power of AI.
 
@@ -36,8 +36,8 @@ An advanced, AI-powered video editor that leverages **WebCodecs API** for high-p
 
 1.  Clone the repository:
     ```bash
-    git clone https://github.com/designcombo/ai-video-editor.git
-    cd ai-video-editor
+    git clone https://github.com/openvideodev/openvideo.git
+    cd openvideo
     ```
 
 2.  Install dependencies:
@@ -61,12 +61,12 @@ An advanced, AI-powered video editor that leverages **WebCodecs API** for high-p
 
 ## License
 
-**Combo** is dual-licensed:
+**OpenVideo** is dual-licensed:
 
 1.  **Personal Use**: Free for personal, non-commercial use. You are welcome to explore the code, modify it, and use it for your own personal projects.
-2.  **Commercial Use**: Any commercial usage of this software requires a valid commercial license from **DesignCombo**.
+2.  **Commercial Use**: Any commercial usage of this software requires a valid commercial license from **OpenVideo**.
 
-For commercial licensing inquiries, please contact **DesignCombo**.
+For commercial licensing inquiries, please contact **OpenVideo**.
 
 ## Contributing
 

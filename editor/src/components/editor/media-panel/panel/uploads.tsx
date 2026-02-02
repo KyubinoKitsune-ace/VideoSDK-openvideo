@@ -11,7 +11,7 @@ import {
   Log,
   clipToJSON,
   type IClip as StudioClip,
-} from '@designcombo/video';
+} from 'openvideo';
 import {
   Upload,
   Film,

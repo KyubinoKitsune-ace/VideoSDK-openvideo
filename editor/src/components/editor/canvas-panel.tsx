@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Studio, fontManager } from '@designcombo/video';
+import { Studio, fontManager } from 'openvideo';
 import { useStudioStore } from '@/stores/studio-store';
 import { editorFont } from './constants';
 

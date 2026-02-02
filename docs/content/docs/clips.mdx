@@ -3,14 +3,14 @@ title: Clips
 description: Building blocks of video compositions.
 ---
 
-Clips are the building blocks of your video composition. DesignCombo supports several types of clips: Video, Image, Text, Audio, and Captions.
+Clips are the building blocks of your video composition. OpenVideo supports several types of clips: Video, Image, Text, Audio, and Captions.
 
 ## Video Clips
 
 ### Loading Video Clips
 
 ```ts
-import { Video } from "@designcombo/video";
+import { Video } from "openvideo";
 
 // Load from URL
 const videoClip = await Video.fromUrl("video.mp4");
@@ -46,7 +46,7 @@ videoClip.playbackRate = 1.5;
 ### Loading Image Clips
 
 ```ts
-import { Image } from "@designcombo/video";
+import { Image } from "openvideo";
 
 const imageClip = await Image.fromUrl("photo.jpg");
 ```
@@ -67,9 +67,9 @@ imageClip.set({
 ### Creating Text Clips
 
 ```ts
-import { Text } from "@designcombo/video";
+import { Text } from "openvideo";
 
-const textClip = new Text("Hello DesignCombo", {
+const textClip = new Text("Hello OpenVideo", {
   fontSize: 72,
   fontFamily: "Inter",
   fill: "#ffffff",
@@ -88,7 +88,7 @@ textClip.style.fontSize = 96;
 
 ### Text Styling
 
-DesignCombo supports standard PixiJS text styling options, including:
+OpenVideo supports standard PixiJS text styling options, including:
 - `fontFamily`, `fontSize`, `fontWeight`
 - `fill` (color)
 - `stroke`, `strokeThickness`
@@ -97,14 +97,14 @@ DesignCombo supports standard PixiJS text styling options, including:
 
 ## Audio Clips
 
-DesignCombo provides audio support for video clips and standalone audio tracks.
+OpenVideo provides audio support for video clips and standalone audio tracks.
 
 ### Standalone Audio
 
 You can use `Audio` clips for background music, sound effects, and voiceovers.
 
 ```ts
-import { Audio } from "@designcombo/video";
+import { Audio } from "openvideo";
 
 // Load audio track asynchronously
 const audioTrack = await Audio.fromUrl("music.mp3");
@@ -148,7 +148,7 @@ Placeholders are used to show a temporary item on the canvas while the real asse
 ### Using Placeholders
 
 ```ts
-import { Placeholder, Video } from "@designcombo/video";
+import { Placeholder, Video } from "openvideo";
 
 const src = "https://example.com/large-video.mp4";
 
@@ -212,7 +212,7 @@ clip.angle = 90; // Rotate 90 degrees clockwise
 
 ### Automatic Positioning & Scaling
 
-DesignCombo provides helper methods to automatically scale and position clips within the scene.
+OpenVideo provides helper methods to automatically scale and position clips within the scene.
 
 ```ts
 // Scale the clip to fit within the specified dimensions while maintaining aspect ratio
@@ -274,7 +274,7 @@ You can extend `BaseClip` to create custom rendering logic using PixiJS.
 ### Custom Clip
 
 ```ts
-import { BaseClip } from "@designcombo/video";
+import { BaseClip } from "openvideo";
 
 class CustomLogoClip extends BaseClip {
   // Implementation details...
@@ -284,7 +284,7 @@ class CustomLogoClip extends BaseClip {
 ### Custom Sprite Clip
 
 ```ts
-import { CustomSpriteClip } from "@designcombo/video";
+import { CustomSpriteClip } from "openvideo";
 
 // Handle raw PixiJS sprites
 ```

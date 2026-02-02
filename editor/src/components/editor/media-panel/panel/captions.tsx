@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Play, Trash2 } from 'lucide-react';
 import { useStudioStore } from '@/stores/studio-store';
-import { fontManager, jsonToClip, Log, type IClip } from '@designcombo/video';
+import { fontManager, jsonToClip, Log, type IClip } from 'openvideo';
 import { generateCaptionClips } from '@/lib/caption-generator';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';

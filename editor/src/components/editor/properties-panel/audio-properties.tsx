@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IClip } from '@designcombo/video';
+import { IClip } from 'openvideo';
 import { IconVolume, IconGauge, IconMusic } from '@tabler/icons-react';
 import {
   InputGroup,
@@ -60,7 +60,7 @@ export function AudioProperties({ clip }: AudioPropertiesProps) {
           <IconMusic className="size-4 text-muted-foreground" />
           <Slider
             value={[0]}
-            onValueChange={() => {}}
+            onValueChange={() => { }}
             min={-12}
             max={12}
             step={1}
@@ -90,7 +90,7 @@ export function AudioProperties({ clip }: AudioPropertiesProps) {
           <IconGauge className="size-4 text-muted-foreground" />
           <Slider
             value={[100]}
-            onValueChange={() => {}}
+            onValueChange={() => { }}
             min={25}
             max={400}
             step={5}
