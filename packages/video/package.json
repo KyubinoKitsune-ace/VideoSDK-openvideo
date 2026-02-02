@@ -21,7 +21,6 @@
   "files": [
     "dist"
   ],
-
   "main": "dist/index.umd.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
@@ -33,16 +32,24 @@
     }
   },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build"
+    "test": "vitest",
+    "test:browser": "vitest run --project unit-chromium",
+    "build": "vite build"
   },
   "devDependencies": {
     "@types/dom-webcodecs": "^0.1.17",
     "@types/rollup-plugin-peer-deps-external": "^2.2.6",
+    "@vitest/browser": "^4.0.18",
+    "@vitest/browser-playwright": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
+    "jsdom": "^27.4.0",
+    "playwright": "^1.49.0",
+    "playwright-core": "^1.58.1",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "typescript": "~5.9.2",
     "vite": "^7.1.5",
-    "vite-plugin-dts": "^4.5.4"
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^4.0.18"
   },
   "dependencies": {
     "@pixi/layout": "^3.2.0",

@@ -1106,7 +1106,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
           }) as unknown as CaptionSplitBitmapText;
           wordText.segmentIndex = segmentIndex;
 
-          const fill = "#ffffff";
+          const fill = '#ffffff';
           const fillToParse =
             typeof fill === 'object' && fill !== null && 'type' in fill
               ? 0xffffff
