@@ -5,7 +5,7 @@ import { usePlaybackStore } from '@/stores/playback-store';
 import type { ITimelineTrack, IClip, TrackType } from '@/types/timeline';
 import type { TimelineCanvas } from './timeline';
 import { generateUUID } from '@/utils/id';
-import { clipToJSON, type IClip as StudioClip } from '@designcombo/video';
+import { clipToJSON, type IClip as StudioClip } from 'openvideo';
 
 interface TimelineStudioSyncProps {
   timelineCanvas?: TimelineCanvas | null;

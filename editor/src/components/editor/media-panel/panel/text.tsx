@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { useStudioStore } from '@/stores/studio-store';
-import { Text, Log } from '@designcombo/video';
+import { Text, Log } from 'openvideo';
 
 const TEXT_PRESETS = [
   {

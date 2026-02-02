@@ -3,14 +3,14 @@ title: Serialization
 description: Save and restore studio state using JSON.
 ---
 
-DesignCombo provides built-in support for serializing the entire studio state into a JSON-serializable object.
+OpenVideo provides built-in support for serializing the entire studio state into a JSON-serializable object.
 
 ## Exporting State
 
 To capture the current state of your project, use the `exportToJSON()` method on the `Studio` instance.
 
 ```ts
-import { Studio } from "@designcombo/video";
+import { Studio } from "openvideo";
 
 const studio = new Studio({
   width: 1920,
@@ -47,7 +47,7 @@ if (savedData) {
 The JSON produced by `studio.exportToJSON()` is directly compatible with the `Compositor`. You can send this JSON to a server-side environment to render the final video.
 
 ```ts
-import { Compositor } from "@designcombo/video";
+import { Compositor } from "openvideo";
 
 const projectData = studio.exportToJSON();
 

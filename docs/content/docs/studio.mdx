@@ -8,7 +8,7 @@ The Studio is the interactive workspace for your video editing. It manages the v
 ## Creating a Studio
 
 ```ts
-import { Studio } from "@designcombo/video";
+import { Studio } from "openvideo";
 
 const studio = new Studio({
   width: 1920,
@@ -59,7 +59,7 @@ const studio = new Studio({
 Add clips to the studio:
 
 ```ts
-import { Image } from "@designcombo/video";
+import { Image } from "openvideo";
 
 const image = await Image.fromUrl("photo.jpg");
 studio.addClip(image);
@@ -349,7 +349,7 @@ This will:
 ## Complete Example
 
 ```ts
-import { Studio, Image, Text } from "@designcombo/video";
+import { Studio, Image, Text } from "openvideo";
 
 // Create studio
 const studio = new Studio({

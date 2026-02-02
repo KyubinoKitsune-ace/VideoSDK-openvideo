@@ -5,7 +5,7 @@ import { VideoProperties } from './video-properties';
 import { AudioProperties } from './audio-properties';
 import { CaptionProperties } from './caption-properties';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { IClip } from '@designcombo/video';
+import { IClip } from 'openvideo';
 import { EffectProperties } from './effect-properties';
 import { TransitionProperties } from './transition-properties';
 

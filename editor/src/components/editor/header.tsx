@@ -3,7 +3,7 @@ import { IconShare } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { useStudioStore } from '@/stores/studio-store';
 import { usePanelStore } from '@/stores/panel-store';
-import { Log, type IClip } from '@designcombo/video';
+import { Log, type IClip } from 'openvideo';
 import { ExportModal } from './export-modal';
 import { LogoIcons } from '../shared/logos';
 import Link from 'next/link';

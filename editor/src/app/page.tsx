@@ -12,7 +12,7 @@ import { usePanelStore } from '@/stores/panel-store';
 import Header from '@/components/editor/header';
 import { Loading } from '@/components/editor/loading';
 import FloatingControl from '@/components/editor/floating-controls/floating-control';
-import { Compositor } from '@designcombo/video';
+import { Compositor } from 'openvideo';
 import { WebCodecsUnsupportedModal } from '@/components/editor/webcodecs-unsupported-modal';
 
 export default function Editor() {

@@ -91,9 +91,6 @@ importers:
       '@deepgram/sdk':
         specifier: ^4.11.2
         version: 4.11.3
-      '@designcombo/video':
-        specifier: workspace:*
-        version: link:../packages/video
       '@radix-ui/react-avatar':
         specifier: ^1.1.11
         version: 1.1.11(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -172,6 +169,9 @@ importers:
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      openvideo:
+        specifier: workspace:*
+        version: link:../packages/openvideo
       opfs-tools:
         specifier: ^0.7.2
         version: 0.7.4
@@ -242,12 +242,12 @@ importers:
 
   packages/node:
     dependencies:
-      '@designcombo/video':
-        specifier: workspace:*
-        version: link:../video
       express:
         specifier: ^4.18.2
         version: 4.22.1
+      openvideo:
+        specifier: workspace:*
+        version: link:../openvideo
       playwright:
         specifier: ^1.49.0
         version: 1.57.0
@@ -262,7 +262,7 @@ importers:
         specifier: ~5.9.2
         version: 5.9.3
 
-  packages/video:
+  packages/openvideo:
     dependencies:
       '@pixi/layout':
         specifier: ^3.2.0

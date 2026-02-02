@@ -1,6 +1,6 @@
 {
-  "name": "@designcombo/video",
-  "version": "0.1.18",
+  "name": "openvideo",
+  "version": "0.0.1",
   "description": "Video rendering and processing library",
   "type": "module",
   "publishConfig": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/designcombo/combo.git"
+    "url": "https://github.com/openvideodev/openvideo.git"
   },
   "keywords": [
     "video",
@@ -16,7 +16,7 @@
     "webcodecs",
     "mp4"
   ],
-  "author": "DesignCombo",
+  "author": "OpenVideoDev",
   "license": "SEE LICENSE IN LICENSE",
   "files": [
     "dist"

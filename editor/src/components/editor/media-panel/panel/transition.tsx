@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GL_TRANSITION_OPTIONS } from '@designcombo/video';
+import { GL_TRANSITION_OPTIONS } from 'openvideo';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudioStore } from '@/stores/studio-store';
 

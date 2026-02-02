@@ -1,7 +1,7 @@
 'use client';
 
 import { useStudioStore } from '@/stores/studio-store';
-import { Audio, Log } from '@designcombo/video';
+import { Audio, Log } from 'openvideo';
 import { IconMusic } from '@tabler/icons-react';
 import { AudioItem } from './audio-item';
 import { useState, useEffect, useCallback } from 'react';

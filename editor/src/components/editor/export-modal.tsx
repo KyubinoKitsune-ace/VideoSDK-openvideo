@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Compositor, Log } from '@designcombo/video';
+import { Compositor, Log } from 'openvideo';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
@@ -210,13 +210,13 @@ export function ExportModal({ open, onOpenChange }: ExportModalProps) {
                 {Math.round(exportProgress * 100)}% •{' '}
                 {exportProgress > 0 && exportStartTime
                   ? (() => {
-                      const elapsed = Date.now() - exportStartTime;
-                      const remaining =
-                        (elapsed / exportProgress - elapsed) / 1000;
-                      const mins = Math.floor(remaining / 60);
-                      const secs = Math.floor(remaining % 60);
-                      return `${mins}min ${secs}s`;
-                    })()
+                    const elapsed = Date.now() - exportStartTime;
+                    const remaining =
+                      (elapsed / exportProgress - elapsed) / 1000;
+                    const mins = Math.floor(remaining / 60);
+                    const secs = Math.floor(remaining % 60);
+                    return `${mins}min ${secs}s`;
+                  })()
                   : 'preparing...'}
               </span>
             </div>

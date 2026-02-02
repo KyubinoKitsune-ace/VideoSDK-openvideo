@@ -1,4 +1,4 @@
-import { fontManager } from '@designcombo/video';
+import { fontManager } from 'openvideo';
 
 /**
  * Fetches caption data from a URL

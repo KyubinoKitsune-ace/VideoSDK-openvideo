@@ -10,21 +10,21 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | Combo',
-    default: 'Combo | The Video SDK for Modern Web',
+    template: '%s | OpenVideo',
+    default: 'OpenVideo | The Video SDK for Modern Web',
   },
   description:
-    'DesignCombo is a framework-agnostic video editor SDK built on WebCodecs and PixiJS.',
+    'OpenVideo is a framework-agnostic video editor SDK built on WebCodecs and PixiJS.',
   openGraph: {
-    title: 'Combo | The Video SDK for Modern Web',
+    title: 'OpenVideo | The Video SDK for Modern Web',
     description: 'Build professional video editing experiences in the browser.',
     url: 'https://docs.combo.sh',
-    siteName: 'Combo',
+    siteName: 'OpenVideo',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Combo | The Video SDK for Modern Web',
+    title: 'OpenVideo | The Video SDK for Modern Web',
     description: 'Build professional video editing experiences in the browser.',
   },
 };
