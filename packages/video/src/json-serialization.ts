@@ -10,7 +10,6 @@ import {
   type IClip,
   type ITransitionInfo,
 } from './clips';
-
 // Base interface for all clips
 interface BaseClipJSON {
   id?: string;
@@ -319,36 +318,8 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
     return await ClipClass.fromObject(json);
   }
 
-  // Fallback to manual construction
-  // Create clip based on type
+  // Fallback to manual construction (mostly for non-media clips like Text/Caption that don't need resource management)
   switch (json.type) {
-    case 'Video': {
-      const response = await fetch(json.src);
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch video from ${json.src}: ${response.status} ${response.statusText}. Make sure the file exists in the public directory.`
-        );
-      }
-      // Support both new flat structure and old options structure
-      const options =
-        json.audio !== undefined
-          ? { audio: json.audio, volume: json.volume }
-          : { volume: json.volume };
-      clip = new Video(response.body!, options as any, json.src);
-      break;
-    }
-    case 'Audio': {
-      if (!json.src || json.src.trim() === '') {
-        throw new Error('Audio requires a valid source URL');
-      }
-      // Support both new flat structure and old options structure
-      const options: { loop?: boolean; volume?: number } = {};
-      if (json.loop !== undefined) options.loop = json.loop;
-      if (json.volume !== undefined) options.volume = json.volume;
-      clip = await Audio.fromUrl(json.src, options);
-      break;
-    }
-    // Image is handled via fromObject
     case 'Text': {
       // Read from new hybrid structure
       const text = json.text || '';

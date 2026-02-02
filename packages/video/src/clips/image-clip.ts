@@ -1,9 +1,10 @@
-import { Assets, Texture } from 'pixi.js';
+import { Texture } from 'pixi.js';
 import { Log } from '../utils/log';
 import { decodeImg } from '../utils';
 import { BaseClip } from './base-clip';
 import { type IClip } from './iclip';
 import { type ClipJSON, type ImageJSON } from '../json-serialization';
+import { ResourceManager } from '../studio/resource-manager';
 
 type AnimateImgType = 'avif' | 'webp' | 'png' | 'gif';
 
@@ -87,7 +88,7 @@ export class Image extends BaseClip implements IClip {
    */
   static async fromUrl(url: string, src?: string): Promise<Image> {
     let texture: Texture | null = null;
-    let imageBitmap: ImageBitmap | null = null;
+    let imageBitmap: ImageBitmap | undefined;
 
     // Optimized handling for blob URLs to avoid PixiJS warnings about unknown extensions
     if (url.startsWith('blob:')) {
@@ -111,54 +112,11 @@ export class Image extends BaseClip implements IClip {
         throw err;
       }
     } else {
-      // Use PixiJS Assets.load() for optimized loading with caching for regular URLs
-      try {
-        texture = await Assets.load<Texture>(url);
+      imageBitmap = await ResourceManager.getImageBitmap(url);
+    }
 
-        if (texture) {
-          // Extract ImageBitmap from Texture for compatibility with Compositor
-          const source = texture.source?.resource?.source;
-
-          if (
-            source instanceof HTMLCanvasElement ||
-            source instanceof OffscreenCanvas
-          ) {
-            imageBitmap = await createImageBitmap(source);
-          } else if (source instanceof HTMLImageElement) {
-            const canvas = new OffscreenCanvas(source.width, source.height);
-            const ctx = canvas.getContext('2d');
-            if (ctx == null) {
-              throw new Error('Failed to create 2d context');
-            }
-            ctx.drawImage(source, 0, 0);
-            imageBitmap = await createImageBitmap(canvas);
-          } else if (source instanceof ImageBitmap) {
-            imageBitmap = await createImageBitmap(source);
-          }
-        }
-      } catch (err) {
-        Log.warn(
-          `Failed to load texture via Assets.load for ${url}, using fallback`,
-          err
-        );
-      }
-
-      // Fallback for regular URLs if Assets.load failed
-      if (!imageBitmap) {
-        try {
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error(
-              `Failed to fetch image: ${response.status} ${response.statusText}`
-            );
-          }
-          const blob = await response.blob();
-          imageBitmap = await createImageBitmap(blob);
-        } catch (err) {
-          Log.error(`Failed to load image from ${url}`, err);
-          throw err;
-        }
-      }
+    if (!imageBitmap) {
+      throw new Error(`Failed to load image from ${url}`);
     }
 
     const clip = new Image(imageBitmap, src || url);
@@ -433,19 +391,8 @@ export class Image extends BaseClip implements IClip {
 
     let clip: Image;
     try {
-      const response = await fetch(json.src);
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch image from ${json.src}: ${response.status} ${response.statusText}. Make sure the file exists in the public directory.`
-        );
-      }
-      const blob = await response.blob();
-      if (!blob.type.startsWith('image/')) {
-        Log.warn(
-          `Image blob has unexpected type: ${blob.type}. Attempting to load anyway.`
-        );
-      }
-      clip = new Image(await createImageBitmap(blob), json.src);
+      const bitmap = await ResourceManager.getImageBitmap(json.src);
+      clip = new Image(bitmap, json.src);
     } catch (error) {
       if (
         error instanceof Error &&

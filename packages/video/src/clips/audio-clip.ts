@@ -7,6 +7,7 @@ import {
 import { BaseClip } from './base-clip';
 import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from './iclip';
 import type { AudioJSON } from '../json-serialization';
+import { ResourceManager } from '../studio/resource-manager';
 
 interface IAudioOpts {
   loop?: boolean;
@@ -84,13 +85,8 @@ export class Audio extends BaseClip implements IPlaybackCapable {
    * });
    */
   static async fromUrl(url: string, opts: IAudioOpts = {}): Promise<Audio> {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch audio from ${url}: ${response.status} ${response.statusText}`
-      );
-    }
-    const clip = new Audio(response.body!, opts, url);
+    const stream = await ResourceManager.getReadableStream(url);
+    const clip = new Audio(stream, opts, url);
     await clip.ready;
     return clip;
   }
