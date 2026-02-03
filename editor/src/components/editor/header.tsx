@@ -235,12 +235,6 @@ export default function Header() {
             <span className="hidden md:block">AI Chat</span>
           </Button>
         </div>
-        <Link href="https://discord.gg/SCfMrQx8kr" target="_blank">
-          <Button className="h-7 rounded-lg" variant={'outline'}>
-            <LogoIcons.discord className="w-6 h-6" />
-            <span className="hidden md:block">Join Us</span>
-          </Button>
-        </Link>
 
         <ExportModal
           open={isExportModalOpen}
