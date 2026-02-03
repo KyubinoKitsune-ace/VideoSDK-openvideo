@@ -239,10 +239,10 @@ export default function Assistant() {
       <ScrollArea className="flex-1 min-h-0 h-full">
         <div
           ref={scrollRef}
-          className="h-full flex items-center overflow-x-hidden p-4 md:p-6 space-y-2"
+          className="h-full  overflow-x-hidden p-4 md:p-6 space-y-2"
         >
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center flex-1 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700">
+            <div className="flex flex-1 h-full flex-col items-center justify-center space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700">
               <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted">
                 <MessageCircle className="w-8 h-8 text-muted-foreground" />
               </div>
@@ -270,7 +270,7 @@ export default function Assistant() {
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {messages.map((m, i) => (
                 <div
                   key={i}
@@ -390,7 +390,7 @@ export default function Assistant() {
               {isLoading && (
                 <div className="flex gap-4 w-full group animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div className="flex flex-col space-y-3 w-full min-w-0 items-start">
-                    <div className="py-3.5 px-5 rounded-3xl text-[15px] leading-relaxed shadow-sm bg-card text-card-foreground rounded-tl-none w-fit">
+                    <div className="py-0 px-5 rounded-3xl text-[15px] leading-relaxed shadow-sm bg-card text-card-foreground rounded-tl-none w-fit">
                       <div className="flex items-center gap-3">
                         <div className="flex gap-1">
                           <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]" />
@@ -410,8 +410,8 @@ export default function Assistant() {
         </div>
       </ScrollArea>
 
-      <div className="p-4 md:p-6 space-y-4 shrink-0">
-        <InputGroup>
+      <div className="p-4 md:p-2 space-y-4 shrink-0">
+        <InputGroup className="rounded-sm">
           <InputGroupTextarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -422,7 +422,7 @@ export default function Assistant() {
               }
             }}
             placeholder="Ask Co-Creator"
-            className="min-h-11 max-h-[200px]"
+            className="min-h-16 max-h-[200px]"
           />
           <InputGroupAddon align="block-end">
             <InputGroupButton

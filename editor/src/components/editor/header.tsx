@@ -163,8 +163,8 @@ export default function Header() {
     <header className="relative flex h-[52px] w-full shrink-0 items-center justify-between px-4 bg-card z-10">
       {/* Left Section */}
       <div className="flex items-center gap-2">
-        <div className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-md ">
-          <LogoIcons.scenify width={20} />
+        <div className="pointer-events-auto flex h-9 w-9 bg-primary/20 items-center justify-center rounded-md ">
+          <LogoIcons.scenify width={24} />
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

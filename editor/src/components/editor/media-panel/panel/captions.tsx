@@ -432,7 +432,7 @@ export default function PanelCaptions() {
             </ScrollArea>
           </div>
         ) : (
-          <div className="flex flex-col gap-6 py-2 items-center text-center">
+          <div className="flex flex-col gap-6 p-4 py-6 items-center text-center">
             <div className="text-sm text-muted-foreground">
               Recognize speech in the selected media and generate captions
               automatically.

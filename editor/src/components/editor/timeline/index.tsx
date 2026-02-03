@@ -310,7 +310,7 @@ export function Timeline() {
 
       {/* Timeline Container */}
       <div
-        className="flex-1 flex flex-col overflow-hidden relative bg-[#1E191C]"
+        className="flex-1 flex flex-col overflow-hidden relative bg-[#121212]"
         ref={timelineRef}
       >
         <TimelinePlayhead
